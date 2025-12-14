@@ -180,7 +180,17 @@ function setupEventListeners() {
     document.querySelectorAll('.close-modal').forEach(closeBtn => {
         closeBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            closeBtn.closest('.modal').classList.remove('active');
+            const modal = closeBtn.closest('.modal');
+            if (modal) {
+                modal.classList.remove('active');
+                // Reset form if it's the create opportunity modal
+                if (modal.id === 'createOpportunityModal') {
+                    const form = document.getElementById('createOpportunityForm');
+                    if (form) {
+                        form.reset();
+                    }
+                }
+            }
         });
     });
 
@@ -479,6 +489,13 @@ function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.classList.remove('active');
+        // Reset form if it's the create opportunity modal
+        if (modalId === 'createOpportunityModal') {
+            const form = document.getElementById('createOpportunityForm');
+            if (form) {
+                form.reset();
+            }
+        }
     }
 }
 
@@ -1282,7 +1299,7 @@ async function handleCreateOpportunity(e) {
         await db.collection('opportunities').add(opportunity);
         
         // Reset form
-        e.target.reset();
+        document.getElementById('createOpportunityForm').reset();
         
         // Close modal
         closeModal('createOpportunityModal');

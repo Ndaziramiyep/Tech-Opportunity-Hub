@@ -463,6 +463,23 @@ main {
     opacity: 0.9;
 }
 
+.btn-warning {
+    background: var(--warning-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: opacity 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-warning:hover {
+    opacity: 0.9;
+}
+
 /* Page Header */
 .page-header {
     max-width: 1200px;
