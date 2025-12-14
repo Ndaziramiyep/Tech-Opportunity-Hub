@@ -392,6 +392,15 @@ function showSection(sectionId) {
             case 'events':
                 loadEvents();
                 break;
+            case 'about':
+                // Load stats for about page
+                if (document.getElementById('statUsers')) {
+                    loadAnalytics();
+                }
+                break;
+            case 'contact':
+                // Contact page is static, no data loading needed
+                break;
             case 'dashboard':
                 if (currentUser) loadDashboardData();
                 break;
@@ -800,6 +809,23 @@ function createOpportunityCard(opportunity) {
     const typeLabel = opportunity.type.charAt(0).toUpperCase() + opportunity.type.slice(1);
     const isSaved = savedOpportunities.has(opportunity.id);
     
+    // Check if deadline has passed
+    let isExpired = false;
+    if (opportunity.deadline) {
+        let deadlineDate;
+        if (opportunity.deadline.toDate) {
+            deadlineDate = opportunity.deadline.toDate();
+        } else if (opportunity.deadline instanceof Date) {
+            deadlineDate = opportunity.deadline;
+        } else {
+            deadlineDate = new Date(opportunity.deadline);
+        }
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        deadlineDate.setHours(0, 0, 0, 0);
+        isExpired = deadlineDate < now;
+    }
+    
     return `
         <div class="opportunity-card" data-id="${opportunity.id}">
             <div class="opportunity-header">
@@ -819,7 +845,7 @@ function createOpportunityCard(opportunity) {
                     ${opportunity.deadline ? `
                     <div class="info-item">
                         <i class="fas fa-clock"></i>
-                        <span>Deadline: ${formatDate(opportunity.deadline)}</span>
+                        <span>Deadline: ${formatDate(opportunity.deadline)} ${isExpired ? '<span style="color: var(--danger-color); font-weight: 600;">(Expired)</span>' : ''}</span>
                     </div>
                     ` : ''}
                     ${opportunity.salary ? `
@@ -843,8 +869,8 @@ function createOpportunityCard(opportunity) {
                     </button>
                     ` : ''}
                     ${currentUser ? `
-                    <button class="btn-primary apply-btn" data-id="${opportunity.id}">
-                        <i class="fas fa-paper-plane"></i> Apply
+                    <button class="btn-primary apply-btn" data-id="${opportunity.id}" ${isExpired ? 'disabled title="This opportunity has expired"' : ''} ${isExpired ? 'style="opacity: 0.6; cursor: not-allowed;"' : ''}>
+                        <i class="fas fa-paper-plane"></i> ${isExpired ? 'Expired' : 'Apply'}
                     </button>
                     ` : ''}
                 </div>
@@ -898,6 +924,23 @@ function displayOpportunityDetails(opportunity) {
     const typeClass = `type-${opportunity.type}`;
     const typeLabel = opportunity.type.charAt(0).toUpperCase() + opportunity.type.slice(1);
     
+    // Check if deadline has passed
+    let isExpired = false;
+    if (opportunity.deadline) {
+        let deadlineDate;
+        if (opportunity.deadline.toDate) {
+            deadlineDate = opportunity.deadline.toDate();
+        } else if (opportunity.deadline instanceof Date) {
+            deadlineDate = opportunity.deadline;
+        } else {
+            deadlineDate = new Date(opportunity.deadline);
+        }
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        deadlineDate.setHours(0, 0, 0, 0);
+        isExpired = deadlineDate < now;
+    }
+    
     detailsDiv.innerHTML = `
         <h2>${opportunity.title}</h2>
         <div class="opportunity-header">
@@ -906,7 +949,7 @@ function displayOpportunityDetails(opportunity) {
                 <span><i class="fas fa-building"></i> ${opportunity.company || 'Not specified'}</span>
                 <span><i class="fas fa-map-marker-alt"></i> ${opportunity.location || 'Remote'}</span>
                 ${opportunity.deadline ? `
-                <span><i class="fas fa-clock"></i> Deadline: ${formatDate(opportunity.deadline)}</span>
+                <span><i class="fas fa-clock"></i> Deadline: ${formatDate(opportunity.deadline)} ${isExpired ? '<span style="color: var(--danger-color); font-weight: 600;">(Expired)</span>' : ''}</span>
                 ` : ''}
             </div>
         </div>
@@ -960,8 +1003,8 @@ function displayOpportunityDetails(opportunity) {
         
         <div class="opportunity-actions detailed-actions">
             ${currentUser ? `
-            <button class="btn-primary apply-btn" data-id="${opportunity.id}">
-                <i class="fas fa-paper-plane"></i> Apply Now
+            <button class="btn-primary apply-btn" data-id="${opportunity.id}" ${isExpired ? 'disabled title="This opportunity has expired"' : ''} ${isExpired ? 'style="opacity: 0.6; cursor: not-allowed;"' : ''}>
+                <i class="fas fa-paper-plane"></i> ${isExpired ? 'Expired' : 'Apply Now'}
             </button>
             ` : `
             <button class="btn-primary" onclick="showModal('loginModal')">
@@ -1012,6 +1055,35 @@ async function applyForOpportunity(opportunityId) {
     }
     
     try {
+        // Get opportunity to check deadline
+        const oppDoc = await db.collection('opportunities').doc(opportunityId).get();
+        if (!oppDoc.exists) {
+            showToast('Opportunity not found', 'error');
+            return;
+        }
+        
+        const opportunity = oppDoc.data();
+        
+        // Check if deadline has passed
+        if (opportunity.deadline) {
+            let deadlineDate;
+            if (opportunity.deadline.toDate) {
+                deadlineDate = opportunity.deadline.toDate();
+            } else if (opportunity.deadline instanceof Date) {
+                deadlineDate = opportunity.deadline;
+            } else {
+                deadlineDate = new Date(opportunity.deadline);
+            }
+            const now = new Date();
+            now.setHours(0, 0, 0, 0);
+            deadlineDate.setHours(0, 0, 0, 0);
+            
+            if (deadlineDate < now) {
+                showToast('This opportunity has expired. The deadline has passed.', 'error');
+                return;
+            }
+        }
+        
         // Check if already applied
         const existingApp = await db.collection('applications')
             .where('userId', '==', currentUser.uid)
@@ -1042,6 +1114,10 @@ async function applyForOpportunity(opportunityId) {
         if (window.location.hash === '#dashboard') {
             loadDashboardData();
         }
+        
+        // Reload opportunities to update button states
+        loadOpportunities();
+        loadAllOpportunities();
     } catch (error) {
         console.error('Error applying:', error);
         showToast('Failed to submit application', 'error');
@@ -1617,11 +1693,13 @@ async function loadAnalytics() {
     try {
         // Total opportunities
         const oppsSnapshot = await db.collection('opportunities').get();
-        document.getElementById('totalOpportunities').textContent = oppsSnapshot.size;
+        const totalOpps = oppsSnapshot.size;
+        document.getElementById('totalOpportunities').textContent = totalOpps;
         
         // Total users
         const usersSnapshot = await db.collection('users').get();
-        document.getElementById('totalUsers').textContent = usersSnapshot.size;
+        const totalUsers = usersSnapshot.size;
+        document.getElementById('totalUsers').textContent = totalUsers;
         
         // Total applications
         const appsSnapshot = await db.collection('applications').get();
@@ -1632,9 +1710,82 @@ async function loadAnalytics() {
             .where('status', '==', 'active')
             .get();
         document.getElementById('activeOpportunities').textContent = activeOppsSnapshot.size;
+        
+        // Update About page stats
+        updateAboutPageStats(totalUsers, totalOpps, activeOppsSnapshot.size);
+        
+        // Load charts
+        await loadAnalyticsCharts();
     } catch (error) {
         console.error('Error loading analytics:', error);
     }
+}
+
+// Update About page statistics
+function updateAboutPageStats(users, opportunities, events) {
+    try {
+        const statUsers = document.getElementById('statUsers');
+        const statOpportunities = document.getElementById('statOpportunities');
+        const statEvents = document.getElementById('statEvents');
+        const statCompanies = document.getElementById('statCompanies');
+        
+        if (statUsers) {
+            animateNumber(statUsers, users);
+        }
+        if (statOpportunities) {
+            animateNumber(statOpportunities, opportunities);
+        }
+        if (statEvents) {
+            // Count events
+            db.collection('opportunities')
+                .where('type', '==', 'event')
+                .where('status', '==', 'active')
+                .get()
+                .then(snapshot => {
+                    animateNumber(statEvents, snapshot.size);
+                })
+                .catch(() => {
+                    if (statEvents) statEvents.textContent = events || '0';
+                });
+        }
+        if (statCompanies) {
+            // Count unique companies
+            db.collection('opportunities').get()
+                .then(snapshot => {
+                    const companies = new Set();
+                    snapshot.forEach(doc => {
+                        const company = doc.data().company;
+                        if (company) companies.add(company);
+                    });
+                    animateNumber(statCompanies, companies.size);
+                })
+                .catch(() => {
+                    if (statCompanies) statCompanies.textContent = '0';
+                });
+        }
+    } catch (error) {
+        console.error('Error updating about page stats:', error);
+    }
+}
+
+// Animate number counting
+function animateNumber(element, target) {
+    if (!element) return;
+    
+    const duration = 2000;
+    const start = 0;
+    const increment = target / (duration / 16);
+    let current = start;
+    
+    const timer = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+            element.textContent = target.toLocaleString();
+            clearInterval(timer);
+        } else {
+            element.textContent = Math.floor(current).toLocaleString();
+        }
+    }, 16);
 }
 
 // Update Opportunity

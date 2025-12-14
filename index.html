@@ -12,6 +12,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 </head>
 <body>
+    <main>
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
@@ -574,94 +575,194 @@
     <!-- Toast Notifications -->
     <div class="toast-container" id="toastContainer"></div>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-container">
-            <div class="footer-section">
-                <h3><i class="fas fa-briefcase"></i> Tech Opportunity Hub</h3>
-                <p>Connecting tech enthusiasts with career opportunities, internships, training programs, and industry events.</p>
-                <div class="social-links">
-                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
-                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-                    <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
-                    <a href="#" aria-label="GitHub"><i class="fab fa-github"></i></a>
-                </div>
-            </div>
-            <div class="footer-section">
-                <h4>Quick Links</h4>
-                <ul>
-                    <li><a href="#home">Home</a></li>
-                    <li><a href="#opportunities">Opportunities</a></li>
-                    <li><a href="#events">Events</a></li>
-                    <li><a href="#about">About Us</a></li>
-                    <li><a href="#contact">Contact</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h4>Resources</h4>
-                <ul>
-                    <li><a href="#dashboard">Dashboard</a></li>
-                    <li><a href="#profile">Profile</a></li>
-                    <li><a href="#">Help Center</a></li>
-                    <li><a href="#">Privacy Policy</a></li>
-                    <li><a href="#">Terms of Service</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h4>Contact Info</h4>
-                <ul class="contact-info">
-                    <li><i class="fas fa-envelope"></i> info@techopportunityhub.com</li>
-                    <li><i class="fas fa-phone"></i> +250 788 123 456</li>
-                    <li><i class="fas fa-map-marker-alt"></i> Kigali, Rwanda</li>
-                </ul>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2024 Tech Opportunity Hub. All rights reserved.</p>
-        </div>
-    </footer>
-
     <!-- About Section -->
     <section id="about" class="page-section">
         <div class="page-header">
             <h1>About Tech Opportunity Hub</h1>
+            <p>Connecting tech talent with opportunities that matter</p>
         </div>
+        
+        <!-- Hero Section -->
+        <div class="about-hero">
+            <div class="about-hero-content">
+                <h2>Empowering Tech Careers Across Africa</h2>
+                <p>Tech Opportunity Hub is the premier platform connecting tech professionals, students, and organizations. We bridge the gap between talent and opportunity, making career growth accessible to everyone in the tech ecosystem.</p>
+            </div>
+        </div>
+
         <div class="about-container">
+            <!-- Stats Section -->
+            <div class="about-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-number" id="statUsers">0</div>
+                    <div class="stat-label">Active Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <div class="stat-number" id="statOpportunities">0</div>
+                    <div class="stat-label">Opportunities</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <div class="stat-number" id="statCompanies">0</div>
+                    <div class="stat-label">Partner Companies</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="stat-number" id="statEvents">0</div>
+                    <div class="stat-label">Events Hosted</div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
             <div class="about-content">
                 <div class="about-section">
-                    <h2><i class="fas fa-bullseye"></i> Our Mission</h2>
-                    <p>Tech Opportunity Hub is dedicated to bridging the gap between tech talent and opportunities. We provide a comprehensive platform where tech enthusiasts can discover jobs, internships, training programs, and networking events all in one place.</p>
+                    <div class="about-icon">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <h2>Our Mission</h2>
+                    <p>Tech Opportunity Hub is dedicated to democratizing access to tech career opportunities. We provide a comprehensive, user-friendly platform where tech enthusiasts can discover jobs, internships, training programs, and networking events all in one place. Our mission is to eliminate barriers and create pathways for tech talent to thrive.</p>
                 </div>
+
                 <div class="about-section">
-                    <h2><i class="fas fa-eye"></i> Our Vision</h2>
-                    <p>To become the leading platform for tech career development, connecting millions of tech professionals with opportunities that help them grow and succeed in their careers.</p>
+                    <div class="about-icon">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                    <h2>Our Vision</h2>
+                    <p>To become the leading platform for tech career development in Africa, connecting millions of tech professionals with opportunities that help them grow, learn, and succeed. We envision a future where every tech talent has equal access to career opportunities, regardless of their location or background.</p>
                 </div>
+
                 <div class="about-section">
-                    <h2><i class="fas fa-users"></i> Who We Are</h2>
-                    <p>We are a team of passionate developers and tech enthusiasts committed to making career opportunities more accessible. Our platform serves students, professionals, and organizations in the tech industry.</p>
+                    <div class="about-icon">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <h2>Our Values</h2>
+                    <div class="values-grid">
+                        <div class="value-item">
+                            <i class="fas fa-handshake"></i>
+                            <h3>Accessibility</h3>
+                            <p>Making opportunities accessible to everyone, everywhere</p>
+                        </div>
+                        <div class="value-item">
+                            <i class="fas fa-shield-alt"></i>
+                            <h3>Trust</h3>
+                            <p>Building a trusted platform for both job seekers and employers</p>
+                        </div>
+                        <div class="value-item">
+                            <i class="fas fa-rocket"></i>
+                            <h3>Innovation</h3>
+                            <p>Continuously improving our platform with cutting-edge technology</p>
+                        </div>
+                        <div class="value-item">
+                            <i class="fas fa-users-cog"></i>
+                            <h3>Community</h3>
+                            <p>Fostering a supportive tech community that grows together</p>
+                        </div>
+                    </div>
                 </div>
+
                 <div class="about-section">
-                    <h2><i class="fas fa-star"></i> What We Offer</h2>
+                    <div class="about-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <h2>What We Offer</h2>
                     <div class="features-grid">
                         <div class="feature-item">
-                            <i class="fas fa-briefcase"></i>
+                            <div class="feature-icon">
+                                <i class="fas fa-briefcase"></i>
+                            </div>
                             <h3>Job Opportunities</h3>
-                            <p>Find full-time and part-time positions in tech companies</p>
+                            <p>Discover full-time and part-time positions from leading tech companies. Filter by location, category, and requirements to find your perfect match.</p>
                         </div>
                         <div class="feature-item">
-                            <i class="fas fa-graduation-cap"></i>
+                            <div class="feature-icon">
+                                <i class="fas fa-graduation-cap"></i>
+                            </div>
                             <h3>Internships</h3>
-                            <p>Discover internship opportunities to gain real-world experience</p>
+                            <p>Find internship opportunities that provide real-world experience and help you build your portfolio while learning from industry experts.</p>
                         </div>
                         <div class="feature-item">
-                            <i class="fas fa-chalkboard-teacher"></i>
+                            <div class="feature-icon">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                            </div>
                             <h3>Training Programs</h3>
-                            <p>Access skill development and certification programs</p>
+                            <p>Access skill development courses, bootcamps, and certification programs to advance your career and stay competitive in the tech industry.</p>
                         </div>
                         <div class="feature-item">
-                            <i class="fas fa-calendar"></i>
+                            <div class="feature-icon">
+                                <i class="fas fa-calendar"></i>
+                            </div>
                             <h3>Tech Events</h3>
-                            <p>Stay updated with conferences, meetups, and workshops</p>
+                            <p>Stay updated with conferences, meetups, workshops, and hackathons. Network with peers and learn from industry leaders.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="about-section">
+                    <div class="about-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h2>Who We Are</h2>
+                    <p>We are a team of passionate developers, designers, and tech enthusiasts committed to making career opportunities more accessible. Our platform serves students, professionals, career changers, and organizations in the tech industry across Africa and beyond.</p>
+                    <p>Founded with the belief that everyone deserves equal access to tech opportunities, we've built a platform that simplifies the job search process and connects talent with the right opportunities at the right time.</p>
+                </div>
+
+                <div class="about-section">
+                    <div class="about-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h2>Why Choose Us?</h2>
+                    <div class="benefits-list">
+                        <div class="benefit-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>
+                                <h3>Comprehensive Platform</h3>
+                                <p>All your career needs in one place - jobs, internships, training, and events</p>
+                            </div>
+                        </div>
+                        <div class="benefit-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>
+                                <h3>User-Friendly Interface</h3>
+                                <p>Intuitive design that makes finding opportunities quick and easy</p>
+                            </div>
+                        </div>
+                        <div class="benefit-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>
+                                <h3>Real-Time Updates</h3>
+                                <p>Get notified instantly when new opportunities match your profile</p>
+                            </div>
+                        </div>
+                        <div class="benefit-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>
+                                <h3>Verified Opportunities</h3>
+                                <p>All listings are verified to ensure quality and authenticity</p>
+                            </div>
+                        </div>
+                        <div class="benefit-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>
+                                <h3>Free to Use</h3>
+                                <p>No hidden fees - access all features completely free</p>
+                            </div>
+                        </div>
+                        <div class="benefit-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>
+                                <h3>Community Support</h3>
+                                <p>Join a growing community of tech professionals and learners</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -673,52 +774,202 @@
     <section id="contact" class="page-section">
         <div class="page-header">
             <h1>Contact Us</h1>
-            <p>Have questions or feedback? We'd love to hear from you!</p>
+            <p>Have questions, feedback, or need support? We're here to help!</p>
         </div>
+        
         <div class="contact-container">
+            <!-- Contact Info Section -->
             <div class="contact-info-section">
-                <div class="contact-card">
-                    <i class="fas fa-envelope"></i>
-                    <h3>Email Us</h3>
-                    <p>info@techopportunityhub.com</p>
-                    <p>support@techopportunityhub.com</p>
+                <div class="contact-intro">
+                    <h2>Get in Touch</h2>
+                    <p>We'd love to hear from you! Whether you have a question about our platform, need support, or want to partner with us, our team is ready to assist you.</p>
                 </div>
-                <div class="contact-card">
-                    <i class="fas fa-phone"></i>
-                    <h3>Call Us</h3>
-                    <p>+250 788 123 456</p>
-                    <p>Mon - Fri, 9:00 AM - 5:00 PM</p>
+
+                <div class="contact-cards-grid">
+                    <div class="contact-card">
+                        <div class="contact-card-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <h3>Email Us</h3>
+                        <p>Send us an email anytime!</p>
+                        <div class="contact-details">
+                            <a href="mailto:info@techopportunityhub.com">
+                                <i class="fas fa-envelope"></i> info@techopportunityhub.com
+                            </a>
+                            <a href="mailto:support@techopportunityhub.com">
+                                <i class="fas fa-headset"></i> support@techopportunityhub.com
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="contact-card">
+                        <div class="contact-card-icon">
+                            <i class="fas fa-phone"></i>
+                        </div>
+                        <h3>Call Us</h3>
+                        <p>Speak directly with our team</p>
+                        <div class="contact-details">
+                            <a href="tel:+250788123456">
+                                <i class="fas fa-phone"></i> +250 788 123 456
+                            </a>
+                            <p class="contact-hours">
+                                <i class="fas fa-clock"></i> Mon - Fri, 9:00 AM - 5:00 PM EAT
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="contact-card">
+                        <div class="contact-card-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <h3>Visit Us</h3>
+                        <p>Come see us in person</p>
+                        <div class="contact-details">
+                            <p>
+                                <i class="fas fa-map-marker-alt"></i> KG 123 Street<br>
+                                Kacyiru, Kigali<br>
+                                Rwanda
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="contact-card">
+                        <div class="contact-card-icon">
+                            <i class="fas fa-share-alt"></i>
+                        </div>
+                        <h3>Follow Us</h3>
+                        <p>Stay connected on social media</p>
+                        <div class="social-links-contact">
+                            <a href="#" class="social-link" title="Facebook">
+                                <i class="fab fa-facebook-f"></i>
+                            </a>
+                            <a href="#" class="social-link" title="Twitter">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                            <a href="#" class="social-link" title="LinkedIn">
+                                <i class="fab fa-linkedin-in"></i>
+                            </a>
+                            <a href="#" class="social-link" title="Instagram">
+                                <i class="fab fa-instagram"></i>
+                            </a>
+                            <a href="#" class="social-link" title="GitHub">
+                                <i class="fab fa-github"></i>
+                            </a>
+                        </div>
+                    </div>
                 </div>
-                <div class="contact-card">
-                    <i class="fas fa-map-marker-alt"></i>
-                    <h3>Visit Us</h3>
-                    <p>Kigali, Rwanda</p>
-                    <p>KG 123 St, Kacyiru</p>
+
+                <!-- Quick Links -->
+                <div class="contact-quick-links">
+                    <h3>Quick Links</h3>
+                    <div class="quick-links-grid">
+                        <a href="#opportunities" class="quick-link">
+                            <i class="fas fa-briefcase"></i> Browse Opportunities
+                        </a>
+                        <a href="#events" class="quick-link">
+                            <i class="fas fa-calendar"></i> View Events
+                        </a>
+                        <a href="#dashboard" class="quick-link">
+                            <i class="fas fa-tachometer-alt"></i> Go to Dashboard
+                        </a>
+                        <a href="#about" class="quick-link">
+                            <i class="fas fa-info-circle"></i> Learn More
+                        </a>
+                    </div>
                 </div>
             </div>
+
+            <!-- Contact Form Section -->
             <div class="contact-form-section">
                 <h2>Send us a Message</h2>
+                <p class="form-description">Fill out the form below and we'll get back to you as soon as possible.</p>
+                
                 <form id="contactForm" class="contact-form">
                     <div class="form-group">
-                        <label for="contactName">Your Name *</label>
-                        <input type="text" id="contactName" class="form-input" required>
+                        <label for="contactName">
+                            <i class="fas fa-user"></i> Your Name *
+                        </label>
+                        <input type="text" id="contactName" class="form-input" placeholder="Enter your full name" required>
                     </div>
+                    
                     <div class="form-group">
-                        <label for="contactEmail">Your Email *</label>
-                        <input type="email" id="contactEmail" class="form-input" required>
+                        <label for="contactEmail">
+                            <i class="fas fa-envelope"></i> Your Email *
+                        </label>
+                        <input type="email" id="contactEmail" class="form-input" placeholder="your.email@example.com" required>
                     </div>
+                    
                     <div class="form-group">
-                        <label for="contactSubject">Subject *</label>
-                        <input type="text" id="contactSubject" class="form-input" required>
+                        <label for="contactSubject">
+                            <i class="fas fa-tag"></i> Subject *
+                        </label>
+                        <select id="contactSubject" class="form-input" required>
+                            <option value="">Select a subject</option>
+                            <option value="general">General Inquiry</option>
+                            <option value="support">Technical Support</option>
+                            <option value="partnership">Partnership Opportunity</option>
+                            <option value="feedback">Feedback & Suggestions</option>
+                            <option value="report">Report an Issue</option>
+                            <option value="other">Other</option>
+                        </select>
                     </div>
+                    
                     <div class="form-group">
-                        <label for="contactMessage">Message *</label>
-                        <textarea id="contactMessage" class="form-input" rows="6" required></textarea>
+                        <label for="contactMessage">
+                            <i class="fas fa-comment-alt"></i> Message *
+                        </label>
+                        <textarea id="contactMessage" class="form-input" rows="6" placeholder="Tell us how we can help you..." required></textarea>
                     </div>
-                    <button type="submit" class="btn-primary">
-                        <i class="fas fa-paper-plane"></i> Send Message
-                    </button>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary btn-large">
+                            <i class="fas fa-paper-plane"></i> Send Message
+                        </button>
+                    </div>
                 </form>
+
+                <!-- FAQ Section -->
+                <div class="contact-faq">
+                    <h3>Frequently Asked Questions</h3>
+                    <div class="faq-list">
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <i class="fas fa-question-circle"></i>
+                                <span>How do I create an account?</span>
+                            </div>
+                            <div class="faq-answer">
+                                Click on the "Register" button in the navigation bar, fill in your details, and verify your email address.
+                            </div>
+                        </div>
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <i class="fas fa-question-circle"></i>
+                                <span>Is the platform free to use?</span>
+                            </div>
+                            <div class="faq-answer">
+                                Yes! Tech Opportunity Hub is completely free for job seekers. All features are available at no cost.
+                            </div>
+                        </div>
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <i class="fas fa-question-circle"></i>
+                                <span>How do I apply for opportunities?</span>
+                            </div>
+                            <div class="faq-answer">
+                                Browse opportunities, click on one that interests you, and click the "Apply Now" button. Make sure your profile is complete!
+                            </div>
+                        </div>
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <i class="fas fa-question-circle"></i>
+                                <span>Can I submit my own events?</span>
+                            </div>
+                            <div class="faq-answer">
+                                Yes! Registered users can submit events. They will be reviewed by our admin team before being published.
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
