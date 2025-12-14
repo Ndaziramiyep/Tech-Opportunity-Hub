@@ -206,16 +206,21 @@ function setupEventListeners() {
     elements.registerForm?.addEventListener('submit', handleRegister);
     elements.createOpportunityForm?.addEventListener('submit', handleCreateOpportunity);
 
-    // Category cards
+    // Category cards (these are actually type filters, not category filters)
     document.querySelectorAll('.category-card').forEach(card => {
         card.addEventListener('click', () => {
-            const category = card.dataset.category;
-            // Navigate to opportunities section and filter by category
+            const type = card.dataset.category; // This is actually a type value
+            // Navigate to opportunities section and filter by type
             showSection('opportunities');
-            // Set the category filter
+            // Set the type filter
+            const typeFilter = document.getElementById('typeFilter');
+            if (typeFilter) {
+                typeFilter.value = type;
+            }
+            // Clear category filter when filtering by type from category cards
             const categoryFilter = document.getElementById('categoryFilter');
             if (categoryFilter) {
-                categoryFilter.value = category;
+                categoryFilter.value = 'all';
             }
             // Apply filters
             applyFilters();
@@ -229,10 +234,19 @@ function setupEventListeners() {
 
     // Filter button
     document.getElementById('applyFilters')?.addEventListener('click', applyFilters);
+    
+    // Clear filters button
+    document.getElementById('clearFilters')?.addEventListener('click', clearFilters);
 
     // Filter dropdowns - apply on change (optional, or keep Apply button)
-    document.getElementById('typeFilter')?.addEventListener('change', applyFilters);
-    document.getElementById('categoryFilter')?.addEventListener('change', applyFilters);
+    document.getElementById('typeFilter')?.addEventListener('change', () => {
+        updateClearFiltersButton();
+        applyFilters();
+    });
+    document.getElementById('categoryFilter')?.addEventListener('change', () => {
+        updateClearFiltersButton();
+        applyFilters();
+    });
 
     // Create opportunity button
     document.getElementById('createOpportunityBtn')?.addEventListener('click', () => {
@@ -297,7 +311,13 @@ function showSection(sectionId) {
         // Load section-specific data
         switch(sectionId) {
             case 'opportunities':
-                loadAllOpportunities();
+                // Only load if we don't have all opportunities yet, or reload if needed
+                if (allOpportunities.length === 0) {
+                    loadAllOpportunities();
+                } else {
+                    // Apply current filters to already loaded opportunities
+                    applyFilters();
+                }
                 break;
             case 'dashboard':
                 if (currentUser) loadDashboardData();
@@ -517,6 +537,11 @@ async function loadOpportunities() {
             return bDate - aDate;
         });
         
+        // Store in allOpportunities for filtering (if not already loaded)
+        if (allOpportunities.length === 0) {
+            allOpportunities = [...opportunities];
+        }
+        
         // Limit to 6 for featured
         opportunities = opportunities.slice(0, 6);
         
@@ -619,14 +644,37 @@ function displayFeaturedOpportunities() {
 
 function displayAllOpportunities() {
     if (!opportunities.length) {
-        elements.allOpportunities.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-briefcase"></i>
-                <h3>No opportunities found</h3>
-                <p>Check back later for new opportunities</p>
-            </div>
-        `;
+        const typeFilter = document.getElementById('typeFilter');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const hasActiveFilters = (typeFilter && typeFilter.value !== 'all') || 
+                                (categoryFilter && categoryFilter.value !== 'all');
+        
+        if (hasActiveFilters && allOpportunities.length > 0) {
+            elements.allOpportunities.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-filter"></i>
+                    <h3>No opportunities match your filters</h3>
+                    <p>Try adjusting your filters or <button class="btn-primary" onclick="clearFilters()" style="margin-top: 1rem;">clear all filters</button></p>
+                </div>
+            `;
+        } else {
+            elements.allOpportunities.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-briefcase"></i>
+                    <h3>No opportunities found</h3>
+                    <p>Check back later for new opportunities</p>
+                </div>
+            `;
+        }
+        // Update filter status
+        updateFilterStatus(0, allOpportunities.length);
         return;
+    }
+    
+    // Ensure the container uses grid layout
+    if (!elements.allOpportunities.classList.contains('opportunities-grid')) {
+        elements.allOpportunities.classList.add('opportunities-grid');
+        elements.allOpportunities.classList.remove('opportunities-list');
     }
     
     elements.allOpportunities.innerHTML = opportunities.map(opp => createOpportunityCard(opp)).join('');
@@ -1414,11 +1462,47 @@ function applyFilters() {
     // Display filtered opportunities
     displayAllOpportunities();
     
-    // Show filter status
-    const filterCount = filtered.length;
-    const totalCount = allOpportunities.length;
-    if (filterCount < totalCount) {
-        showToast(`Showing ${filterCount} of ${totalCount} opportunities`, 'info');
+    // Update clear filters button visibility
+    updateClearFiltersButton();
+    
+    // Show filter status in the UI
+    updateFilterStatus(filtered.length, allOpportunities.length);
+}
+
+function updateClearFiltersButton() {
+    const typeFilter = document.getElementById('typeFilter');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const clearFiltersBtn = document.getElementById('clearFilters');
+    
+    const hasActiveFilters = (typeFilter && typeFilter.value !== 'all') || 
+                            (categoryFilter && categoryFilter.value !== 'all');
+    
+    if (clearFiltersBtn) {
+        clearFiltersBtn.style.display = hasActiveFilters ? 'inline-flex' : 'none';
+    }
+}
+
+function updateFilterStatus(filteredCount, totalCount) {
+    // Find or create filter status element
+    let statusElement = document.getElementById('filterStatus');
+    if (!statusElement) {
+        const filtersDiv = document.querySelector('.filters');
+        if (filtersDiv) {
+            statusElement = document.createElement('div');
+            statusElement.id = 'filterStatus';
+            statusElement.style.cssText = 'margin-top: 1rem; color: var(--gray-color); font-size: 0.9rem;';
+            filtersDiv.appendChild(statusElement);
+        }
+    }
+    
+    if (statusElement) {
+        if (filteredCount < totalCount) {
+            statusElement.textContent = `Showing ${filteredCount} of ${totalCount} opportunities`;
+            statusElement.style.display = 'block';
+        } else {
+            statusElement.textContent = `Showing all ${totalCount} opportunities`;
+            statusElement.style.display = 'block';
+        }
     }
 }
 
@@ -1458,8 +1542,14 @@ function clearFilters() {
     if (typeFilter) typeFilter.value = 'all';
     if (categoryFilter) categoryFilter.value = 'all';
     
+    // Update current filters
+    currentFilters.type = 'all';
+    currentFilters.category = 'all';
+    
     // Apply filters (will show all)
     applyFilters();
+    
+    showToast('Filters cleared', 'info');
 }
 
 // Additional admin functions (stubs - implement as needed)
@@ -1551,3 +1641,7 @@ window.editOpportunity = editOpportunity;
 window.deleteOpportunity = deleteOpportunity;
 window.makeAdmin = makeAdmin;
 window.deleteUser = deleteUser;
+window.clearFilters = clearFilters;
+window.applyFilters = applyFilters;
+window.filterOpportunitiesByCategory = filterOpportunitiesByCategory;
+window.filterOpportunitiesByType = filterOpportunitiesByType;
