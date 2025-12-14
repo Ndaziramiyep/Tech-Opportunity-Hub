@@ -1019,3 +1019,65 @@ main {
 .status-pending { background: #fef3c7; color: #92400e; }
 .status-closed { background: #fee2e2; color: #991b1b; }
 .status-draft { background: #e5e7eb; color: #374151; }
+
+/* Categories Management */
+.categories-management {
+    margin-top: 2rem;
+}
+
+.categories-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.category-item {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    transition: box-shadow 0.3s;
+}
+
+.category-item:hover {
+    box-shadow: var(--shadow);
+}
+
+.category-item-content {
+    flex: 1;
+}
+
+.category-item-content h3 {
+    margin-bottom: 0.5rem;
+    color: var(--dark-color);
+}
+
+.category-item-content p {
+    color: var(--gray-color);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.category-id {
+    font-size: 0.75rem;
+    color: var(--gray-color);
+    font-family: monospace;
+}
+
+.category-item-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.category-default-badge {
+    padding: 0.25rem 0.75rem;
+    background: var(--light-color);
+    color: var(--gray-color);
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}

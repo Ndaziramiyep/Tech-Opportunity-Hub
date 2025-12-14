@@ -285,6 +285,14 @@ function setupEventListeners() {
     document.getElementById('adminCreateOpportunity')?.addEventListener('click', () => {
         showModal('createOpportunityModal');
     });
+
+    // Profile update button
+    document.getElementById('updateProfileBtn')?.addEventListener('click', handleUpdateProfile);
+
+    // Add category button
+    document.getElementById('addCategoryBtn')?.addEventListener('click', () => {
+        showAddCategoryModal();
+    });
 }
 
 // Navigation
@@ -328,6 +336,9 @@ function showSection(sectionId) {
                     // Apply current filters to already loaded opportunities
                     applyFilters();
                 }
+                break;
+            case 'events':
+                loadEvents();
                 break;
             case 'dashboard':
                 if (currentUser) loadDashboardData();
@@ -955,6 +966,7 @@ async function loadDashboardData() {
     await loadApplications();
     await loadSavedOpportunities();
     await loadNotifications();
+    await loadUserProfileForDashboard();
 }
 
 async function loadApplications() {
@@ -1158,6 +1170,7 @@ async function loadAdminData() {
     await loadAllOpportunitiesForAdmin();
     await loadAllUsers();
     await loadAnalytics();
+    await loadCategories();
 }
 
 async function loadAllOpportunitiesForAdmin() {
@@ -1418,6 +1431,11 @@ function showDashboardTab(tabId) {
     const tab = document.getElementById(tabId);
     if (tab) {
         tab.classList.add('active');
+        
+        // Load tab-specific data
+        if (tabId === 'profile' && currentUser) {
+            loadUserProfileForDashboard();
+        }
     }
     
     // Activate corresponding menu item
@@ -1442,6 +1460,11 @@ function showAdminTab(tabId) {
     const tab = document.getElementById(tabId);
     if (tab) {
         tab.classList.add('active');
+        
+        // Load tab-specific data
+        if (tabId === 'categories') {
+            loadCategories();
+        }
     }
     
     // Activate corresponding menu item
@@ -1688,3 +1711,292 @@ window.applyFilters = applyFilters;
 window.filterOpportunitiesByCategory = filterOpportunitiesByCategory;
 window.filterOpportunitiesByType = filterOpportunitiesByType;
 window.removeAdmin = removeAdmin;
+window.editCategory = editCategory;
+window.deleteCategory = deleteCategory;
+
+// Events Functions
+async function loadEvents() {
+    try {
+        const eventsList = document.getElementById('eventsList');
+        if (!eventsList) return;
+        
+        showLoading(eventsList);
+        
+        let snapshot;
+        try {
+            snapshot = await db.collection('opportunities')
+                .where('status', '==', 'active')
+                .where('type', '==', 'event')
+                .orderBy('createdAt', 'desc')
+                .get();
+        } catch (indexError) {
+            console.warn('Index error, trying alternative query:', indexError);
+            try {
+                snapshot = await db.collection('opportunities')
+                    .where('status', '==', 'active')
+                    .where('type', '==', 'event')
+                    .get();
+            } catch (statusError) {
+                console.warn('Status filter error, loading all events:', statusError);
+                snapshot = await db.collection('opportunities')
+                    .where('type', '==', 'event')
+                    .get();
+            }
+        }
+        
+        const events = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            if (!data.status || data.status === 'active') {
+                events.push({
+                    id: doc.id,
+                    ...data
+                });
+            }
+        });
+        
+        // Sort by date if available
+        events.sort((a, b) => {
+            const aDate = a.createdAt?.toDate ? a.createdAt.toDate() : (a.createdAt ? new Date(a.createdAt) : new Date(0));
+            const bDate = b.createdAt?.toDate ? b.createdAt.toDate() : (b.createdAt ? new Date(b.createdAt) : new Date(0));
+            return bDate - aDate;
+        });
+        
+        displayEvents(events);
+    } catch (error) {
+        console.error('Error loading events:', error);
+        const eventsList = document.getElementById('eventsList');
+        if (eventsList) {
+            showError(eventsList, 'Failed to load events');
+        }
+    }
+}
+
+function displayEvents(events) {
+    const eventsList = document.getElementById('eventsList');
+    if (!eventsList) return;
+    
+    if (!events.length) {
+        eventsList.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-calendar"></i>
+                <h3>No events found</h3>
+                <p>Check back later for upcoming tech events</p>
+            </div>
+        `;
+        return;
+    }
+    
+    eventsList.innerHTML = events.map(event => createOpportunityCard(event)).join('');
+    attachOpportunityCardListeners();
+}
+
+// Profile Functions
+async function loadUserProfileForDashboard() {
+    if (!currentUser) return;
+    
+    try {
+        const doc = await db.collection('users').doc(currentUser.uid).get();
+        if (doc.exists) {
+            const userData = doc.data();
+            
+            // Populate profile form
+            const profileName = document.getElementById('profileName');
+            const profileEmail = document.getElementById('profileEmail');
+            const profilePhone = document.getElementById('profilePhone');
+            const profileSkills = document.getElementById('profileSkills');
+            const profileBio = document.getElementById('profileBio');
+            
+            if (profileName) profileName.value = userData.name || currentUser.displayName || '';
+            if (profileEmail) profileEmail.value = userData.email || currentUser.email || '';
+            if (profilePhone) profilePhone.value = userData.phone || '';
+            if (profileSkills) profileSkills.value = userData.skills ? userData.skills.join(', ') : '';
+            if (profileBio) profileBio.value = userData.bio || '';
+        }
+    } catch (error) {
+        console.error('Error loading user profile:', error);
+        showToast('Failed to load profile', 'error');
+    }
+}
+
+async function handleUpdateProfile(e) {
+    e.preventDefault();
+    
+    if (!currentUser) {
+        showToast('Please login to update profile', 'error');
+        return;
+    }
+    
+    try {
+        const name = document.getElementById('profileName').value;
+        const phone = document.getElementById('profilePhone').value;
+        const skills = document.getElementById('profileSkills').value.split(',').map(s => s.trim()).filter(s => s);
+        const bio = document.getElementById('profileBio').value;
+        
+        const updateData = {
+            name: name,
+            phone: phone,
+            skills: skills,
+            bio: bio,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        // Update Firestore
+        await db.collection('users').doc(currentUser.uid).update(updateData);
+        
+        // Update display name in Firebase Auth
+        if (name && name !== currentUser.displayName) {
+            await currentUser.updateProfile({
+            displayName: name
+            });
+        }
+        
+        // Update UI
+        elements.userName.textContent = name;
+        const userSpan = elements.userDropdown.querySelector('span');
+        if (userSpan) userSpan.textContent = name;
+        
+        showToast('Profile updated successfully!', 'success');
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        showToast('Failed to update profile', 'error');
+    }
+}
+
+// Categories Management Functions
+async function loadCategories() {
+    try {
+        const categoriesList = document.getElementById('categoriesList');
+        if (!categoriesList) return;
+        
+        // Default categories
+        const defaultCategories = [
+            { id: 'web-dev', name: 'Web Development', description: 'Frontend and backend web technologies' },
+            { id: 'mobile-dev', name: 'Mobile Development', description: 'iOS, Android, and cross-platform mobile apps' },
+            { id: 'data-science', name: 'Data Science', description: 'Data analysis, machine learning, and analytics' },
+            { id: 'ai-ml', name: 'AI/ML', description: 'Artificial Intelligence and Machine Learning' },
+            { id: 'cybersecurity', name: 'Cybersecurity', description: 'Security, encryption, and threat protection' },
+            { id: 'cloud', name: 'Cloud Computing', description: 'Cloud platforms and infrastructure' }
+        ];
+        
+        // Try to load custom categories from Firestore
+        let customCategories = [];
+        try {
+            const snapshot = await db.collection('categories').orderBy('name').get();
+            customCategories = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+        } catch (error) {
+            console.warn('Could not load custom categories, using defaults:', error);
+        }
+        
+        // Combine default and custom categories
+        const allCategories = [...defaultCategories, ...customCategories.filter(c => !defaultCategories.find(d => d.id === c.id))];
+        
+        displayCategories(allCategories);
+    } catch (error) {
+        console.error('Error loading categories:', error);
+        const categoriesList = document.getElementById('categoriesList');
+        if (categoriesList) {
+            showError(categoriesList, 'Failed to load categories');
+        }
+    }
+}
+
+function displayCategories(categories) {
+    const categoriesList = document.getElementById('categoriesList');
+    if (!categoriesList) return;
+    
+    if (!categories.length) {
+        categoriesList.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-tags"></i>
+                <h3>No categories found</h3>
+            </div>
+        `;
+        return;
+    }
+    
+    categoriesList.innerHTML = categories.map(category => `
+        <div class="category-item" data-id="${category.id}">
+            <div class="category-item-content">
+                <h3>${category.name}</h3>
+                <p>${category.description || 'No description'}</p>
+                <span class="category-id">ID: ${category.id}</span>
+            </div>
+            <div class="category-item-actions">
+                <button class="btn-secondary" onclick="editCategory('${category.id}')" title="Edit Category">
+                    <i class="fas fa-edit"></i>
+                </button>
+                ${category.id.startsWith('custom-') || !['web-dev', 'mobile-dev', 'data-science', 'ai-ml', 'cybersecurity', 'cloud'].includes(category.id) ? `
+                <button class="btn-danger" onclick="deleteCategory('${category.id}')" title="Delete Category">
+                    <i class="fas fa-trash"></i>
+                </button>
+                ` : `
+                <span class="category-default-badge">Default</span>
+                `}
+            </div>
+        </div>
+    `).join('');
+}
+
+function showAddCategoryModal() {
+    const name = prompt('Enter category name:');
+    if (!name || !name.trim()) return;
+    
+    const description = prompt('Enter category description (optional):') || '';
+    const id = 'custom-' + name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    
+    addCategory(id, name.trim(), description.trim());
+}
+
+async function addCategory(id, name, description) {
+    try {
+        await db.collection('categories').doc(id).set({
+            name: name,
+            description: description,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        showToast('Category added successfully!', 'success');
+        loadCategories();
+    } catch (error) {
+        console.error('Error adding category:', error);
+        showToast('Failed to add category', 'error');
+    }
+}
+
+async function editCategory(categoryId) {
+    const name = prompt('Enter new category name:');
+    if (!name || !name.trim()) return;
+    
+    const description = prompt('Enter new category description (optional):') || '';
+    
+    try {
+        await db.collection('categories').doc(categoryId).update({
+            name: name.trim(),
+            description: description.trim(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        showToast('Category updated successfully!', 'success');
+        loadCategories();
+    } catch (error) {
+        console.error('Error updating category:', error);
+        showToast('Failed to update category', 'error');
+    }
+}
+
+async function deleteCategory(categoryId) {
+    if (!confirm('Are you sure you want to delete this category?')) return;
+    
+    try {
+        await db.collection('categories').doc(categoryId).delete();
+        showToast('Category deleted successfully!', 'success');
+        loadCategories();
+    } catch (error) {
+        console.error('Error deleting category:', error);
+        showToast('Failed to delete category', 'error');
+    }
+}
