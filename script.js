@@ -89,7 +89,12 @@ const elements = {
     
     // Admin
     adminOpportunitiesTable: document.getElementById('adminOpportunitiesTable'),
-    usersTable: document.getElementById('usersTable')
+    adminEventsTable: document.getElementById('adminEventsTable'),
+    usersTable: document.getElementById('usersTable'),
+    
+    // Forms
+    editOpportunityForm: document.getElementById('editOpportunityForm'),
+    contactForm: document.getElementById('contactForm')
 };
 
 // Initialize Application
@@ -114,7 +119,7 @@ function initFirebaseAuth() {
             currentUser = user;
             await loadUserProfile(user.uid);
             updateUIForAuthenticatedUser();
-            loadUserData();
+            await loadUserSavedOpportunities();
         } else {
             currentUser = null;
             userRole = 'user';
@@ -247,6 +252,21 @@ function setupEventListeners() {
     elements.loginForm?.addEventListener('submit', handleLogin);
     elements.registerForm?.addEventListener('submit', handleRegister);
     elements.createOpportunityForm?.addEventListener('submit', handleCreateOpportunity);
+    elements.editOpportunityForm?.addEventListener('submit', handleUpdateOpportunity);
+    elements.contactForm?.addEventListener('submit', handleContactForm);
+    
+    // Submit event button
+    document.getElementById('submitEventBtn')?.addEventListener('click', () => {
+        if (currentUser) {
+            showModal('submitEventModal');
+        } else {
+            showToast('Please login to submit an event', 'error');
+            showModal('loginModal');
+        }
+    });
+    
+    // Submit event form
+    document.getElementById('submitEventForm')?.addEventListener('submit', handleSubmitEvent);
 
     // Category cards (these are actually type filters, not category filters)
     document.querySelectorAll('.category-card').forEach(card => {
@@ -490,8 +510,16 @@ function updateUIForAuthenticatedUser() {
         document.getElementById('adminLinks').style.display = 'block';
     }
     
-    // Show create opportunity button
-    document.getElementById('createOpportunityBtn').style.display = 'inline-flex';
+    // Show create opportunity button for admins
+    if (userRole === 'admin') {
+        document.getElementById('createOpportunityBtn').style.display = 'inline-flex';
+    }
+    
+    // Show submit event button for all users
+    const submitEventBtn = document.getElementById('submitEventBtn');
+    if (submitEventBtn) {
+        submitEventBtn.style.display = 'inline-flex';
+    }
 }
 
 function updateUIForGuest() {
@@ -512,6 +540,12 @@ function updateUIForGuest() {
     
     // Hide create opportunity button
     document.getElementById('createOpportunityBtn').style.display = 'none';
+    
+    // Hide submit event button
+    const submitEventBtn = document.getElementById('submitEventBtn');
+    if (submitEventBtn) {
+        submitEventBtn.style.display = 'none';
+    }
 }
 
 // Modal Management
@@ -571,7 +605,13 @@ async function loadOpportunities() {
                 .get();
         } catch (indexError) {
             // If index error, try without orderBy or without status filter
-            console.warn('Index error, trying alternative query:', indexError);
+            // Firestore index warning - this is expected and handled gracefully
+            // The app will work without the index, but creating it improves performance
+            if (indexError.code === 'failed-precondition') {
+                console.info('Firestore index not found, using fallback query. This is normal and the app will work correctly.');
+            } else {
+                console.warn('Index error, trying alternative query:', indexError);
+            }
             try {
                 snapshot = await db.collection('opportunities')
                     .where('status', '==', 'active')
@@ -643,7 +683,13 @@ async function loadAllOpportunities() {
                 .get();
         } catch (indexError) {
             // If index error, try without orderBy or without status filter
-            console.warn('Index error, trying alternative query:', indexError);
+            // Firestore index warning - this is expected and handled gracefully
+            // The app will work without the index, but creating it improves performance
+            if (indexError.code === 'failed-precondition') {
+                console.info('Firestore index not found, using fallback query. This is normal and the app will work correctly.');
+            } else {
+                console.warn('Index error, trying alternative query:', indexError);
+            }
             try {
                 snapshot = await db.collection('opportunities')
                     .where('status', '==', 'active')
@@ -987,6 +1033,9 @@ async function applyForOpportunity(opportunityId) {
             userName: currentUser.displayName
         });
         
+        // Log the action
+        await logUserAction('apply_opportunity', `Applied for opportunity: ${opportunityId}`, { opportunityId });
+        
         showToast('Application submitted successfully!', 'success');
         
         // Reload user data
@@ -1019,10 +1068,26 @@ async function loadDashboardData() {
 
 async function loadApplications() {
     try {
-        const snapshot = await db.collection('applications')
-            .where('userId', '==', currentUser.uid)
-            .orderBy('appliedAt', 'desc')
-            .get();
+        if (!currentUser) return;
+        
+        const applicationsList = document.getElementById('applicationsList');
+        if (!applicationsList) return;
+        
+        showLoading(applicationsList);
+        
+        let snapshot;
+        try {
+            snapshot = await db.collection('applications')
+                .where('userId', '==', currentUser.uid)
+                .orderBy('appliedAt', 'desc')
+                .get();
+        } catch (indexError) {
+            console.info('Index error for applications, using fallback query');
+            // Try without orderBy
+            snapshot = await db.collection('applications')
+                .where('userId', '==', currentUser.uid)
+                .get();
+        }
         
         applications = [];
         const opportunitiesMap = new Map();
@@ -1033,17 +1098,33 @@ async function loadApplications() {
             
             // Load opportunity details
             if (!opportunitiesMap.has(application.opportunityId)) {
-                const oppDoc = await db.collection('opportunities').doc(application.opportunityId).get();
-                if (oppDoc.exists) {
-                    opportunitiesMap.set(application.opportunityId, oppDoc.data());
+                try {
+                    const oppDoc = await db.collection('opportunities').doc(application.opportunityId).get();
+                    if (oppDoc.exists) {
+                        opportunitiesMap.set(application.opportunityId, oppDoc.data());
+                    }
+                } catch (error) {
+                    console.warn('Error loading opportunity for application:', application.opportunityId, error);
                 }
             }
+        }
+        
+        // Sort manually if orderBy wasn't used
+        if (snapshot.docs.length > 0) {
+            applications.sort((a, b) => {
+                const aDate = a.appliedAt?.toDate ? a.appliedAt.toDate() : (a.appliedAt ? new Date(a.appliedAt) : new Date(0));
+                const bDate = b.appliedAt?.toDate ? b.appliedAt.toDate() : (b.appliedAt ? new Date(b.appliedAt) : new Date(0));
+                return bDate - aDate;
+            });
         }
         
         displayApplications(opportunitiesMap);
     } catch (error) {
         console.error('Error loading applications:', error);
-        showError(elements.applicationsList, 'Failed to load applications');
+        const applicationsList = document.getElementById('applicationsList');
+        if (applicationsList) {
+            showError(applicationsList, 'Failed to load applications. Please try again.');
+        }
     }
 }
 
@@ -1086,6 +1167,34 @@ function displayApplications(opportunitiesMap) {
             </div>
         `;
     }).join('');
+}
+
+/**
+ * Load user's saved opportunities IDs into the Set for quick lookup
+ * This is called when user logs in to populate the savedOpportunities Set
+ * @returns {Promise<void>}
+ */
+async function loadUserSavedOpportunities() {
+    if (!currentUser) return;
+    
+    try {
+        const snapshot = await db.collection('users').doc(currentUser.uid)
+            .collection('saved')
+            .get();
+        
+        savedOpportunities.clear();
+        snapshot.forEach(doc => {
+            const oppId = doc.data().opportunityId;
+            if (oppId) {
+                savedOpportunities.add(oppId);
+            }
+        });
+        
+        console.log(`Loaded ${savedOpportunities.size} saved opportunities for user`);
+    } catch (error) {
+        console.error('Error loading saved opportunities:', error);
+        // Don't show error toast here as it's a background operation
+    }
 }
 
 async function loadSavedOpportunities() {
@@ -1222,20 +1331,50 @@ function displayNotifications() {
  * @returns {Promise<void>}
  */
 async function loadAdminData() {
-    if (userRole !== 'admin') return;
+    if (userRole !== 'admin') {
+        console.warn('User is not an admin, cannot load admin data');
+        return;
+    }
     
-    await loadAllOpportunitiesForAdmin();
-    await loadAllUsers();
-    await loadAnalytics();
-    await loadCategories();
+    console.log('Loading admin data...');
+    
+    try {
+        // Load data for the currently active tab first
+        const activeTab = document.querySelector('.admin-tab.active');
+        const activeTabId = activeTab ? activeTab.id : 'manage-opportunities';
+        
+        // Load all data in parallel for better performance
+        await Promise.all([
+            loadAllOpportunitiesForAdmin(),
+            loadAllEventsForAdmin(),
+            loadAllUsers(),
+            loadAnalytics(),
+            loadCategories(),
+            loadUserLogs()
+        ]);
+        
+        console.log('Admin data loaded successfully');
+    } catch (error) {
+        console.error('Error loading admin data:', error);
+        showToast('Error loading admin data. Please refresh the page.', 'error');
+    }
 }
 
 async function loadAllOpportunitiesForAdmin() {
     try {
-        if (!elements.adminOpportunitiesTable) return;
+        // Wait a bit to ensure DOM is ready (fixes online deployment issue)
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const tableElement = document.getElementById('adminOpportunitiesTable');
+        if (!tableElement) {
+            console.warn('adminOpportunitiesTable element not found');
+            return;
+        }
+        
+        console.log('Loading opportunities for admin...');
         
         // Show loading state
-        elements.adminOpportunitiesTable.innerHTML = `
+        tableElement.innerHTML = `
             <tr>
                 <td colspan="7" style="text-align: center; padding: 2rem;">
                     <div class="loading">
@@ -1257,10 +1396,10 @@ async function loadAllOpportunitiesForAdmin() {
             snapshot = await db.collection('opportunities').get();
         }
         
-        elements.adminOpportunitiesTable.innerHTML = '';
+        tableElement.innerHTML = '';
         
         if (snapshot.empty) {
-            elements.adminOpportunitiesTable.innerHTML = `
+            tableElement.innerHTML = `
                 <tr>
                     <td colspan="7" style="text-align: center; padding: 2rem;">
                         <div class="empty-state">
@@ -1305,33 +1444,50 @@ async function loadAllOpportunitiesForAdmin() {
         }
         
         // Display all opportunities
-        opportunities.forEach(opp => {
-            const row = document.createElement('tr');
-            const typeLabel = opp.type ? opp.type.charAt(0).toUpperCase() + opp.type.slice(1) : 'N/A';
-            const status = opp.status || 'active';
-            
-            row.innerHTML = `
-                <td>${opp.title || 'Untitled'}</td>
-                <td><span class="opportunity-type type-${opp.type || 'job'}">${typeLabel}</span></td>
-                <td>${getCategoryLabel(opp.category || '')}</td>
-                <td>${formatDate(opp.createdAt?.toDate())}</td>
-                <td>${opp.applicationCount || 0}</td>
-                <td><span class="status-badge status-${status}">${status}</span></td>
-                <td class="table-actions">
-                    <button class="btn-secondary" onclick="editOpportunity('${opp.id}')" title="Edit Opportunity">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn-danger" onclick="deleteOpportunity('${opp.id}')" title="Delete Opportunity">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
+        if (opportunities.length === 0) {
+            tableElement.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 2rem;">
+                        <div class="empty-state">
+                            <i class="fas fa-briefcase"></i>
+                            <h3>No opportunities found</h3>
+                            <p>Create your first opportunity to get started</p>
+                        </div>
+                    </td>
+                </tr>
             `;
-            elements.adminOpportunitiesTable.appendChild(row);
-        });
+        } else {
+            opportunities.forEach(opp => {
+                const row = document.createElement('tr');
+                const typeLabel = opp.type ? opp.type.charAt(0).toUpperCase() + opp.type.slice(1) : 'N/A';
+                const status = opp.status || 'active';
+                
+                row.innerHTML = `
+                    <td>${opp.title || 'Untitled'}</td>
+                    <td><span class="opportunity-type type-${opp.type || 'job'}">${typeLabel}</span></td>
+                    <td>${getCategoryLabel(opp.category || '')}</td>
+                    <td>${formatDate(opp.createdAt?.toDate())}</td>
+                    <td>${opp.applicationCount || 0}</td>
+                    <td><span class="status-badge status-${status}">${status}</span></td>
+                    <td class="table-actions">
+                        <button class="btn-secondary" onclick="editOpportunity('${opp.id}')" title="Edit Opportunity">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-danger" onclick="deleteOpportunity('${opp.id}')" title="Delete Opportunity">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tableElement.appendChild(row);
+            });
+        }
+        
+        console.log(`Loaded ${opportunities.length} opportunities for admin`);
     } catch (error) {
         console.error('Error loading opportunities for admin:', error);
-        if (elements.adminOpportunitiesTable) {
-            elements.adminOpportunitiesTable.innerHTML = `
+        const tableElement = document.getElementById('adminOpportunitiesTable');
+        if (tableElement) {
+            tableElement.innerHTML = `
                 <tr>
                     <td colspan="7" style="text-align: center; padding: 2rem;">
                         <div class="empty-state">
@@ -1349,10 +1505,19 @@ async function loadAllOpportunitiesForAdmin() {
 
 async function loadAllUsers() {
     try {
-        if (!elements.usersTable) return;
+        // Wait a bit to ensure DOM is ready (fixes online deployment issue)
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const tableElement = document.getElementById('usersTable');
+        if (!tableElement) {
+            console.warn('usersTable element not found');
+            return;
+        }
+        
+        console.log('Loading users for admin...');
         
         // Show loading state
-        elements.usersTable.innerHTML = `
+        tableElement.innerHTML = `
             <tr>
                 <td colspan="6" style="text-align: center; padding: 2rem;">
                     <div class="loading">
@@ -1365,10 +1530,10 @@ async function loadAllUsers() {
         
         const snapshot = await db.collection('users').get();
         
-        elements.usersTable.innerHTML = '';
+        tableElement.innerHTML = '';
         
         if (snapshot.empty) {
-            elements.usersTable.innerHTML = `
+            tableElement.innerHTML = `
                 <tr>
                     <td colspan="6" style="text-align: center; padding: 2rem;">
                         <div class="empty-state">
@@ -1382,40 +1547,57 @@ async function loadAllUsers() {
             return;
         }
         
-        snapshot.forEach((doc) => {
-            const user = { id: doc.id, ...doc.data() };
-            
-            const row = document.createElement('tr');
-            const role = user.role || 'user';
-            const isCurrentUser = user.id === currentUser?.uid;
-            
-            row.innerHTML = `
-                <td>${user.name || 'Unknown'}</td>
-                <td>${user.email || 'No email'}</td>
-                <td><span class="user-role">${role}</span></td>
-                <td>${formatDate(user.createdAt?.toDate())}</td>
-                <td><span class="status-badge status-active">Active</span></td>
-                <td class="table-actions">
-                    ${role !== 'admin' ? `
-                    <button class="btn-success" onclick="makeAdmin('${user.id}')" title="Make Admin">
-                        <i class="fas fa-user-shield"></i> Make Admin
-                    </button>
-                    ` : `
-                    <button class="btn-warning" onclick="removeAdmin('${user.id}')" title="Remove Admin" ${isCurrentUser ? 'disabled style="opacity: 0.5;"' : ''}>
-                        <i class="fas fa-user-slash"></i> Remove Admin
-                    </button>
-                    `}
-                    <button class="btn-danger" onclick="deleteUser('${user.id}')" title="Delete User" ${isCurrentUser ? 'disabled style="opacity: 0.5;"' : ''}>
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
+        if (snapshot.empty) {
+            tableElement.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 2rem;">
+                        <div class="empty-state">
+                            <i class="fas fa-users"></i>
+                            <h3>No users found</h3>
+                            <p>Users will appear here once they register</p>
+                        </div>
+                    </td>
+                </tr>
             `;
-            elements.usersTable.appendChild(row);
-        });
+        } else {
+            snapshot.forEach((doc) => {
+                const user = { id: doc.id, ...doc.data() };
+                
+                const row = document.createElement('tr');
+                const role = user.role || 'user';
+                const isCurrentUser = user.id === currentUser?.uid;
+                
+                row.innerHTML = `
+                    <td>${user.name || 'Unknown'}</td>
+                    <td>${user.email || 'No email'}</td>
+                    <td><span class="user-role">${role}</span></td>
+                    <td>${formatDate(user.createdAt?.toDate())}</td>
+                    <td><span class="status-badge status-active">Active</span></td>
+                    <td class="table-actions">
+                        ${role !== 'admin' ? `
+                        <button class="btn-success" onclick="makeAdmin('${user.id}')" title="Make Admin">
+                            <i class="fas fa-user-shield"></i> Make Admin
+                        </button>
+                        ` : `
+                        <button class="btn-warning" onclick="removeAdmin('${user.id}')" title="Remove Admin" ${isCurrentUser ? 'disabled style="opacity: 0.5;"' : ''}>
+                            <i class="fas fa-user-slash"></i> Remove Admin
+                        </button>
+                        `}
+                        <button class="btn-danger" onclick="deleteUser('${user.id}')" title="Delete User" ${isCurrentUser ? 'disabled style="opacity: 0.5;"' : ''}>
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tableElement.appendChild(row);
+            });
+        }
+        
+        console.log(`Loaded ${snapshot.size} users for admin`);
     } catch (error) {
         console.error('Error loading users:', error);
-        if (elements.usersTable) {
-            elements.usersTable.innerHTML = `
+        const tableElement = document.getElementById('usersTable');
+        if (tableElement) {
+            tableElement.innerHTML = `
                 <tr>
                     <td colspan="6" style="text-align: center; padding: 2rem;">
                         <div class="empty-state">
@@ -1452,6 +1634,93 @@ async function loadAnalytics() {
         document.getElementById('activeOpportunities').textContent = activeOppsSnapshot.size;
     } catch (error) {
         console.error('Error loading analytics:', error);
+    }
+}
+
+// Update Opportunity
+async function handleUpdateOpportunity(e) {
+    e.preventDefault();
+    
+    if (!currentUser || userRole !== 'admin') {
+        showToast('Only admins can update opportunities', 'error');
+        return;
+    }
+    
+    const opportunityId = document.getElementById('editOpportunityId').value;
+    if (!opportunityId) {
+        showToast('Invalid opportunity ID', 'error');
+        return;
+    }
+    
+    const updateData = {
+        title: document.getElementById('editOpportunityTitle').value,
+        type: document.getElementById('editOpportunityType').value,
+        category: document.getElementById('editOpportunityCategory').value,
+        company: document.getElementById('editOpportunityCompany').value,
+        location: document.getElementById('editOpportunityLocation').value,
+        description: document.getElementById('editOpportunityDescription').value,
+        requirements: document.getElementById('editOpportunityRequirements').value,
+        benefits: document.getElementById('editOpportunityBenefits').value,
+        salary: document.getElementById('editOpportunitySalary').value,
+        link: document.getElementById('editOpportunityLink').value,
+        deadline: document.getElementById('editOpportunityDeadline').value,
+        status: document.getElementById('editOpportunityStatus').value,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedBy: currentUser.uid,
+        updatedByName: currentUser.displayName
+    };
+    
+    try {
+        showToast('Updating opportunity...', 'info');
+        await db.collection('opportunities').doc(opportunityId).update(updateData);
+        
+        // Reset form
+        elements.editOpportunityForm.reset();
+        
+        // Close modal
+        closeModal('editOpportunityModal');
+        
+        // Show success message
+        showToast('Opportunity updated successfully!', 'success');
+        
+        // Reload opportunities
+        if (window.location.hash === '#admin') {
+            loadAllOpportunitiesForAdmin();
+            loadAllEventsForAdmin();
+        }
+        loadOpportunities();
+        loadAllOpportunities();
+        loadEvents();
+    } catch (error) {
+        console.error('Error updating opportunity:', error);
+        showToast('Failed to update opportunity', 'error');
+    }
+}
+
+// Contact Form Handler
+async function handleContactForm(e) {
+    e.preventDefault();
+    
+    const contactData = {
+        name: document.getElementById('contactName').value,
+        email: document.getElementById('contactEmail').value,
+        subject: document.getElementById('contactSubject').value,
+        message: document.getElementById('contactMessage').value,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        status: 'new'
+    };
+    
+    try {
+        showToast('Sending message...', 'info');
+        await db.collection('contacts').add(contactData);
+        
+        // Reset form
+        elements.contactForm.reset();
+        
+        showToast('Thank you! Your message has been sent successfully.', 'success');
+    } catch (error) {
+        console.error('Error sending contact message:', error);
+        showToast('Failed to send message. Please try again.', 'error');
     }
 }
 
@@ -1642,8 +1911,25 @@ function showAdminTab(tabId) {
         tab.classList.add('active');
         
         // Load tab-specific data
-        if (tabId === 'categories') {
-            loadCategories();
+        switch(tabId) {
+            case 'manage-opportunities':
+                loadAllOpportunitiesForAdmin();
+                break;
+            case 'manage-events':
+                loadAllEventsForAdmin();
+                break;
+            case 'manage-users':
+                loadAllUsers();
+                break;
+            case 'analytics':
+                loadAnalytics();
+                break;
+            case 'categories':
+                loadCategories();
+                break;
+            case 'user-logs':
+                loadUserLogs();
+                break;
         }
     }
     
@@ -1784,9 +2070,51 @@ function clearFilters() {
     showToast('Filters cleared', 'info');
 }
 
-// Additional admin functions (stubs - implement as needed)
+// Additional admin functions
 async function editOpportunity(opportunityId) {
-    showToast('Edit opportunity feature coming soon', 'info');
+    try {
+        const doc = await db.collection('opportunities').doc(opportunityId).get();
+        if (!doc.exists) {
+            showToast('Opportunity not found', 'error');
+            return;
+        }
+        
+        const opp = { id: doc.id, ...doc.data() };
+        
+        // Populate form
+        document.getElementById('editOpportunityId').value = opp.id;
+        document.getElementById('editOpportunityTitle').value = opp.title || '';
+        document.getElementById('editOpportunityType').value = opp.type || '';
+        document.getElementById('editOpportunityCategory').value = opp.category || '';
+        document.getElementById('editOpportunityCompany').value = opp.company || '';
+        document.getElementById('editOpportunityLocation').value = opp.location || '';
+        document.getElementById('editOpportunityDescription').value = opp.description || '';
+        document.getElementById('editOpportunityRequirements').value = opp.requirements || '';
+        document.getElementById('editOpportunityBenefits').value = opp.benefits || '';
+        document.getElementById('editOpportunitySalary').value = opp.salary || '';
+        document.getElementById('editOpportunityLink').value = opp.link || '';
+        document.getElementById('editOpportunityStatus').value = opp.status || 'active';
+        
+        // Format date for input
+        if (opp.deadline) {
+            let deadlineDate;
+            if (opp.deadline.toDate) {
+                deadlineDate = opp.deadline.toDate();
+            } else if (opp.deadline instanceof Date) {
+                deadlineDate = opp.deadline;
+            } else {
+                deadlineDate = new Date(opp.deadline);
+            }
+            document.getElementById('editOpportunityDeadline').value = deadlineDate.toISOString().split('T')[0];
+        } else {
+            document.getElementById('editOpportunityDeadline').value = '';
+        }
+        
+        showModal('editOpportunityModal');
+    } catch (error) {
+        console.error('Error loading opportunity for edit:', error);
+        showToast('Failed to load opportunity', 'error');
+    }
 }
 
 async function deleteOpportunity(opportunityId) {
@@ -1794,8 +2122,15 @@ async function deleteOpportunity(opportunityId) {
         try {
             await db.collection('opportunities').doc(opportunityId).delete();
             showToast('Opportunity deleted successfully', 'success');
-            loadAllOpportunitiesForAdmin();
+            
+            // Reload all relevant data
+            if (window.location.hash === '#admin') {
+                loadAllOpportunitiesForAdmin();
+                loadAllEventsForAdmin();
+            }
             loadOpportunities();
+            loadAllOpportunities();
+            loadEvents();
         } catch (error) {
             console.error('Error deleting opportunity:', error);
             showToast('Failed to delete opportunity', 'error');
@@ -1901,6 +2236,10 @@ window.filterOpportunitiesByType = filterOpportunitiesByType;
 window.removeAdmin = removeAdmin;
 window.editCategory = editCategory;
 window.deleteCategory = deleteCategory;
+window.approveEvent = approveEvent;
+window.exportLogsToPDF = exportLogsToPDF;
+window.clearAllLogs = clearAllLogs;
+window.deleteLog = deleteLog;
 
 // Events Functions
 async function loadEvents() {
@@ -1918,7 +2257,13 @@ async function loadEvents() {
                 .orderBy('createdAt', 'desc')
                 .get();
         } catch (indexError) {
-            console.warn('Index error, trying alternative query:', indexError);
+            // Firestore index warning - this is expected and handled gracefully
+            // The app will work without the index, but creating it improves performance
+            if (indexError.code === 'failed-precondition') {
+                console.info('Firestore index not found, using fallback query. This is normal and the app will work correctly.');
+            } else {
+                console.warn('Index error, trying alternative query:', indexError);
+            }
             try {
                 snapshot = await db.collection('opportunities')
                     .where('status', '==', 'active')
@@ -2035,12 +2380,15 @@ async function handleUpdateProfile(e) {
         // Update display name in Firebase Auth
         if (name && name !== currentUser.displayName) {
             await currentUser.updateProfile({
-            displayName: name
+                displayName: name
             });
         }
         
+        // Log the action
+        await logUserAction('update_profile', 'Updated profile information', {});
+        
         // Update UI
-        elements.userName.textContent = name;
+        if (elements.userName) elements.userName.textContent = name;
         const userSpan = elements.userDropdown.querySelector('span');
         if (userSpan) userSpan.textContent = name;
         
@@ -2083,6 +2431,7 @@ async function loadCategories() {
         const allCategories = [...defaultCategories, ...customCategories.filter(c => !defaultCategories.find(d => d.id === c.id))];
         
         displayCategories(allCategories);
+        console.log(`Loaded ${allCategories.length} categories (${defaultCategories.length} default, ${customCategories.length} custom)`);
     } catch (error) {
         console.error('Error loading categories:', error);
         const categoriesList = document.getElementById('categoriesList');
@@ -2186,5 +2535,250 @@ async function deleteCategory(categoryId) {
     } catch (error) {
         console.error('Error deleting category:', error);
         showToast('Failed to delete category', 'error');
+    }
+}
+
+// User Logs Functions
+async function loadUserLogs() {
+    try {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const tableElement = document.getElementById('userLogsTable');
+        if (!tableElement) {
+            console.warn('userLogsTable element not found');
+            return;
+        }
+        
+        console.log('Loading user logs...');
+        
+        // Show loading state
+        tableElement.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 2rem;">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>Loading logs...</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        
+        const snapshot = await db.collection('userLogs')
+            .orderBy('timestamp', 'desc')
+            .limit(100)
+            .get();
+        
+        tableElement.innerHTML = '';
+        
+        if (snapshot.empty) {
+            tableElement.innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 2rem;">
+                        <div class="empty-state">
+                            <i class="fas fa-history"></i>
+                            <h3>No logs found</h3>
+                            <p>User activity logs will appear here</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        snapshot.forEach((doc) => {
+            const log = { id: doc.id, ...doc.data() };
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${log.userName || log.userId || 'Unknown'}</td>
+                <td>${log.action || 'N/A'}</td>
+                <td>${log.details || 'No details'}</td>
+                <td>${formatDate(log.timestamp?.toDate())}</td>
+                <td class="table-actions">
+                    <button class="btn-danger" onclick="deleteLog('${log.id}')" title="Delete Log">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tableElement.appendChild(row);
+        });
+        
+        console.log(`Loaded ${snapshot.size} user logs`);
+    } catch (error) {
+        console.error('Error loading user logs:', error);
+        const tableElement = document.getElementById('userLogsTable');
+        if (tableElement) {
+            tableElement.innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 2rem;">
+                        <div class="empty-state">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h3>Error loading logs</h3>
+                            <p>${error.message || 'Please try again later'}</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+}
+
+// Log user action
+async function logUserAction(action, details, metadata = {}) {
+    if (!currentUser) return;
+    
+    try {
+        await db.collection('userLogs').add({
+            userId: currentUser.uid,
+            userName: currentUser.displayName || 'Unknown',
+            userEmail: currentUser.email,
+            action: action,
+            details: details,
+            metadata: metadata,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    } catch (error) {
+        console.error('Error logging user action:', error);
+        // Don't show error to user as logging is non-critical
+    }
+}
+
+// Delete single log
+async function deleteLog(logId) {
+    if (!confirm('Are you sure you want to delete this log entry?')) return;
+    
+    try {
+        await db.collection('userLogs').doc(logId).delete();
+        showToast('Log deleted successfully', 'success');
+        loadUserLogs();
+    } catch (error) {
+        console.error('Error deleting log:', error);
+        showToast('Failed to delete log', 'error');
+    }
+}
+
+// Clear all logs
+async function clearAllLogs() {
+    if (!confirm('Are you sure you want to delete ALL user logs? This action cannot be undone.')) return;
+    
+    try {
+        showToast('Deleting all logs...', 'info');
+        const snapshot = await db.collection('userLogs').get();
+        
+        const batch = db.batch();
+        snapshot.docs.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        
+        await batch.commit();
+        showToast('All logs deleted successfully', 'success');
+        loadUserLogs();
+    } catch (error) {
+        console.error('Error clearing logs:', error);
+        showToast('Failed to clear logs', 'error');
+    }
+}
+
+// Export logs to PDF
+async function exportLogsToPDF() {
+    try {
+        showToast('Generating PDF...', 'info');
+        const snapshot = await db.collection('userLogs')
+            .orderBy('timestamp', 'desc')
+            .limit(500)
+            .get();
+        
+        const logs = [];
+        snapshot.forEach(doc => {
+            logs.push({ id: doc.id, ...doc.data() });
+        });
+        
+        // Create PDF content
+        let pdfContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>User Activity Logs</title>
+                <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; }
+                    h1 { color: #2563eb; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                    th { background-color: #2563eb; color: white; }
+                    tr:nth-child(even) { background-color: #f2f2f2; }
+                </style>
+            </head>
+            <body>
+                <h1>User Activity Logs Report</h1>
+                <p>Generated on: ${new Date().toLocaleString()}</p>
+                <p>Total Logs: ${logs.length}</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Details</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        logs.forEach(log => {
+            pdfContent += `
+                <tr>
+                    <td>${log.userName || log.userId || 'Unknown'}</td>
+                    <td>${log.action || 'N/A'}</td>
+                    <td>${log.details || 'No details'}</td>
+                    <td>${formatDate(log.timestamp?.toDate())}</td>
+                </tr>
+            `;
+        });
+        
+        pdfContent += `
+                    </tbody>
+                </table>
+            </body>
+            </html>
+        `;
+        
+        // Open in new window for printing/saving as PDF
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(pdfContent);
+        printWindow.document.close();
+        printWindow.print();
+        
+        showToast('PDF ready for printing/download', 'success');
+    } catch (error) {
+        console.error('Error exporting logs to PDF:', error);
+        showToast('Failed to export logs', 'error');
+    }
+}
+
+// Approve event (admin only)
+async function approveEvent(eventId) {
+    if (!currentUser || userRole !== 'admin') {
+        showToast('Only admins can approve events', 'error');
+        return;
+    }
+    
+    try {
+        await db.collection('opportunities').doc(eventId).update({
+            status: 'active',
+            requiresApproval: false,
+            approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            approvedBy: currentUser.uid,
+            approvedByName: currentUser.displayName
+        });
+        
+        // Log the action
+        await logUserAction('approve_event', `Approved event: ${eventId}`, { eventId });
+        
+        showToast('Event approved and published!', 'success');
+        loadAllEventsForAdmin();
+        loadEvents();
+    } catch (error) {
+        console.error('Error approving event:', error);
+        showToast('Failed to approve event', 'error');
     }
 }

@@ -23,6 +23,8 @@
                 <a href="#home" class="nav-link active"><i class="fas fa-home"></i> Home</a>
                 <a href="#opportunities" class="nav-link"><i class="fas fa-search"></i> Opportunities</a>
                 <a href="#events" class="nav-link"><i class="fas fa-calendar"></i> Events</a>
+                <a href="#about" class="nav-link"><i class="fas fa-info-circle"></i> About</a>
+                <a href="#contact" class="nav-link"><i class="fas fa-envelope"></i> Contact</a>
                 <div class="nav-user" id="userDropdown">
                     <i class="fas fa-user-circle"></i>
                     <span>Guest</span>
@@ -53,6 +55,8 @@
         <a href="#home" class="mobile-nav-link"><i class="fas fa-home"></i> Home</a>
         <a href="#opportunities" class="mobile-nav-link"><i class="fas fa-search"></i> Opportunities</a>
         <a href="#events" class="mobile-nav-link"><i class="fas fa-calendar"></i> Events</a>
+        <a href="#about" class="mobile-nav-link"><i class="fas fa-info-circle"></i> About</a>
+        <a href="#contact" class="mobile-nav-link"><i class="fas fa-envelope"></i> Contact</a>
         <hr>
         <a href="#" id="mobileLoginBtn" class="mobile-nav-link"><i class="fas fa-sign-in-alt"></i> Login</a>
         <a href="#" id="mobileRegisterBtn" class="mobile-nav-link"><i class="fas fa-user-plus"></i> Register</a>
@@ -175,6 +179,11 @@
             <div class="page-header">
                 <h1>Upcoming Events</h1>
                 <p>Discover tech conferences, meetups, workshops, and networking events</p>
+                <div style="margin-top: 1rem;">
+                    <button class="btn-primary" id="submitEventBtn" style="display: none;">
+                        <i class="fas fa-plus"></i> Submit an Event
+                    </button>
+                </div>
             </div>
             <div class="opportunities-container">
                 <div class="opportunities-grid" id="eventsList">
@@ -274,6 +283,9 @@
                         <a href="#" class="admin-menu-item active" data-admin-tab="manage-opportunities">
                             <i class="fas fa-briefcase"></i> Manage Opportunities
                         </a>
+                        <a href="#" class="admin-menu-item" data-admin-tab="manage-events">
+                            <i class="fas fa-calendar"></i> Manage Events
+                        </a>
                         <a href="#" class="admin-menu-item" data-admin-tab="manage-users">
                             <i class="fas fa-users"></i> Manage Users
                         </a>
@@ -353,6 +365,50 @@
                                 <h3>Active Opportunities</h3>
                                 <p id="activeOpportunities">0</p>
                             </div>
+                        </div>
+                        <div class="analytics-charts">
+                            <div class="chart-container">
+                                <h3>Opportunities by Type</h3>
+                                <canvas id="opportunitiesTypeChart"></canvas>
+                            </div>
+                            <div class="chart-container">
+                                <h3>Applications Over Time</h3>
+                                <canvas id="applicationsChart"></canvas>
+                            </div>
+                            <div class="chart-container">
+                                <h3>User Growth</h3>
+                                <canvas id="usersChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-tab" id="user-logs">
+                        <div class="admin-header">
+                            <h2>User Activity Logs</h2>
+                            <div>
+                                <button class="btn-secondary" onclick="exportLogsToPDF()">
+                                    <i class="fas fa-file-pdf"></i> Export PDF
+                                </button>
+                                <button class="btn-danger" onclick="clearAllLogs()">
+                                    <i class="fas fa-trash"></i> Clear All Logs
+                                </button>
+                            </div>
+                        </div>
+                        <div class="admin-table-container">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Action</th>
+                                        <th>Details</th>
+                                        <th>Timestamp</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="userLogsTable">
+                                    <!-- User logs will be loaded here -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                     
@@ -517,6 +573,246 @@
 
     <!-- Toast Notifications -->
     <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3><i class="fas fa-briefcase"></i> Tech Opportunity Hub</h3>
+                <p>Connecting tech enthusiasts with career opportunities, internships, training programs, and industry events.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                    <a href="#" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#opportunities">Opportunities</a></li>
+                    <li><a href="#events">Events</a></li>
+                    <li><a href="#about">About Us</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Resources</h4>
+                <ul>
+                    <li><a href="#dashboard">Dashboard</a></li>
+                    <li><a href="#profile">Profile</a></li>
+                    <li><a href="#">Help Center</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Terms of Service</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Contact Info</h4>
+                <ul class="contact-info">
+                    <li><i class="fas fa-envelope"></i> info@techopportunityhub.com</li>
+                    <li><i class="fas fa-phone"></i> +250 788 123 456</li>
+                    <li><i class="fas fa-map-marker-alt"></i> Kigali, Rwanda</li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 Tech Opportunity Hub. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- About Section -->
+    <section id="about" class="page-section">
+        <div class="page-header">
+            <h1>About Tech Opportunity Hub</h1>
+        </div>
+        <div class="about-container">
+            <div class="about-content">
+                <div class="about-section">
+                    <h2><i class="fas fa-bullseye"></i> Our Mission</h2>
+                    <p>Tech Opportunity Hub is dedicated to bridging the gap between tech talent and opportunities. We provide a comprehensive platform where tech enthusiasts can discover jobs, internships, training programs, and networking events all in one place.</p>
+                </div>
+                <div class="about-section">
+                    <h2><i class="fas fa-eye"></i> Our Vision</h2>
+                    <p>To become the leading platform for tech career development, connecting millions of tech professionals with opportunities that help them grow and succeed in their careers.</p>
+                </div>
+                <div class="about-section">
+                    <h2><i class="fas fa-users"></i> Who We Are</h2>
+                    <p>We are a team of passionate developers and tech enthusiasts committed to making career opportunities more accessible. Our platform serves students, professionals, and organizations in the tech industry.</p>
+                </div>
+                <div class="about-section">
+                    <h2><i class="fas fa-star"></i> What We Offer</h2>
+                    <div class="features-grid">
+                        <div class="feature-item">
+                            <i class="fas fa-briefcase"></i>
+                            <h3>Job Opportunities</h3>
+                            <p>Find full-time and part-time positions in tech companies</p>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-graduation-cap"></i>
+                            <h3>Internships</h3>
+                            <p>Discover internship opportunities to gain real-world experience</p>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                            <h3>Training Programs</h3>
+                            <p>Access skill development and certification programs</p>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-calendar"></i>
+                            <h3>Tech Events</h3>
+                            <p>Stay updated with conferences, meetups, and workshops</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="page-section">
+        <div class="page-header">
+            <h1>Contact Us</h1>
+            <p>Have questions or feedback? We'd love to hear from you!</p>
+        </div>
+        <div class="contact-container">
+            <div class="contact-info-section">
+                <div class="contact-card">
+                    <i class="fas fa-envelope"></i>
+                    <h3>Email Us</h3>
+                    <p>info@techopportunityhub.com</p>
+                    <p>support@techopportunityhub.com</p>
+                </div>
+                <div class="contact-card">
+                    <i class="fas fa-phone"></i>
+                    <h3>Call Us</h3>
+                    <p>+250 788 123 456</p>
+                    <p>Mon - Fri, 9:00 AM - 5:00 PM</p>
+                </div>
+                <div class="contact-card">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <h3>Visit Us</h3>
+                    <p>Kigali, Rwanda</p>
+                    <p>KG 123 St, Kacyiru</p>
+                </div>
+            </div>
+            <div class="contact-form-section">
+                <h2>Send us a Message</h2>
+                <form id="contactForm" class="contact-form">
+                    <div class="form-group">
+                        <label for="contactName">Your Name *</label>
+                        <input type="text" id="contactName" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contactEmail">Your Email *</label>
+                        <input type="email" id="contactEmail" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contactSubject">Subject *</label>
+                        <input type="text" id="contactSubject" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contactMessage">Message *</label>
+                        <textarea id="contactMessage" class="form-input" rows="6" required></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-paper-plane"></i> Send Message
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Edit Opportunity Modal -->
+    <div class="modal" id="editOpportunityModal">
+        <div class="modal-content modal-lg">
+            <span class="close-modal">&times;</span>
+            <h2>Edit Opportunity</h2>
+            <form id="editOpportunityForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editOpportunityTitle">Title *</label>
+                        <input type="text" id="editOpportunityTitle" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editOpportunityType">Type *</label>
+                        <select id="editOpportunityType" class="form-input" required>
+                            <option value="">Select Type</option>
+                            <option value="job">Job</option>
+                            <option value="internship">Internship</option>
+                            <option value="training">Training</option>
+                            <option value="event">Event</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editOpportunityCategory">Category *</label>
+                        <select id="editOpportunityCategory" class="form-input" required>
+                            <option value="">Select Category</option>
+                            <option value="web-dev">Web Development</option>
+                            <option value="mobile-dev">Mobile Development</option>
+                            <option value="data-science">Data Science</option>
+                            <option value="ai-ml">AI/ML</option>
+                            <option value="cybersecurity">Cybersecurity</option>
+                            <option value="cloud">Cloud Computing</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editOpportunityDeadline">Deadline</label>
+                        <input type="date" id="editOpportunityDeadline" class="form-input">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="editOpportunityCompany">Company/Organization</label>
+                    <input type="text" id="editOpportunityCompany" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="editOpportunityLocation">Location</label>
+                    <input type="text" id="editOpportunityLocation" class="form-input" placeholder="e.g., Remote, Kigali, Rwanda">
+                </div>
+                <div class="form-group">
+                    <label for="editOpportunityDescription">Description *</label>
+                    <textarea id="editOpportunityDescription" class="form-input" rows="5" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editOpportunityRequirements">Requirements</label>
+                    <textarea id="editOpportunityRequirements" class="form-input" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editOpportunityBenefits">Benefits</label>
+                    <textarea id="editOpportunityBenefits" class="form-input" rows="3"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editOpportunitySalary">Salary/Stipend</label>
+                        <input type="text" id="editOpportunitySalary" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="editOpportunityLink">Application Link</label>
+                        <input type="url" id="editOpportunityLink" class="form-input">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="editOpportunityStatus">Status *</label>
+                    <select id="editOpportunityStatus" class="form-input" required>
+                        <option value="active">Active</option>
+                        <option value="closed">Closed</option>
+                        <option value="draft">Draft</option>
+                    </select>
+                </div>
+                <input type="hidden" id="editOpportunityId">
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('editOpportunityModal')">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i> Update Opportunity
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Scripts -->
     <script src="script.js"></script>
