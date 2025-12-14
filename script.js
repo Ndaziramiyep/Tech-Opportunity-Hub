@@ -19,9 +19,14 @@ const storage = firebase.storage();
 let currentUser = null;
 let userRole = 'user';
 let opportunities = [];
+let allOpportunities = []; // Store all opportunities for filtering
 let savedOpportunities = new Set();
 let applications = [];
 let notifications = [];
+let currentFilters = {
+    type: 'all',
+    category: 'all'
+};
 
 // DOM Elements
 const elements = {
@@ -161,19 +166,39 @@ function setupEventListeners() {
     // Modal switching
     document.getElementById('switchToRegister')?.addEventListener('click', (e) => {
         e.preventDefault();
+        closeModal('loginModal');
         showModal('registerModal');
     });
     
     document.getElementById('switchToLogin')?.addEventListener('click', (e) => {
         e.preventDefault();
+        closeModal('registerModal');
         showModal('loginModal');
     });
 
     // Close modals
     document.querySelectorAll('.close-modal').forEach(closeBtn => {
-        closeBtn.addEventListener('click', () => {
+        closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
             closeBtn.closest('.modal').classList.remove('active');
         });
+    });
+
+    // Close modals when clicking outside
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+        
+        // Prevent modal content clicks from closing the modal
+        const modalContent = modal.querySelector('.modal-content');
+        if (modalContent) {
+            modalContent.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        }
     });
 
     // Forms submission
@@ -185,7 +210,15 @@ function setupEventListeners() {
     document.querySelectorAll('.category-card').forEach(card => {
         card.addEventListener('click', () => {
             const category = card.dataset.category;
-            filterOpportunitiesByCategory(category);
+            // Navigate to opportunities section and filter by category
+            showSection('opportunities');
+            // Set the category filter
+            const categoryFilter = document.getElementById('categoryFilter');
+            if (categoryFilter) {
+                categoryFilter.value = category;
+            }
+            // Apply filters
+            applyFilters();
         });
     });
 
@@ -193,6 +226,13 @@ function setupEventListeners() {
     document.getElementById('exploreBtn')?.addEventListener('click', () => {
         showSection('opportunities');
     });
+
+    // Filter button
+    document.getElementById('applyFilters')?.addEventListener('click', applyFilters);
+
+    // Filter dropdowns - apply on change (optional, or keep Apply button)
+    document.getElementById('typeFilter')?.addEventListener('change', applyFilters);
+    document.getElementById('categoryFilter')?.addEventListener('change', applyFilters);
 
     // Create opportunity button
     document.getElementById('createOpportunityBtn')?.addEventListener('click', () => {
@@ -294,7 +334,9 @@ async function handleLogin(e) {
     try {
         showToast('Logging in...', 'info');
         await auth.signInWithEmailAndPassword(email, password);
-        showModal('loginModal', false);
+        closeModal('loginModal');
+        // Reset form
+        elements.loginForm.reset();
         showToast('Login successful!', 'success');
     } catch (error) {
         console.error('Login error:', error);
@@ -333,7 +375,9 @@ async function handleRegister(e) {
             profileComplete: false
         });
         
-        showModal('registerModal', false);
+        closeModal('registerModal');
+        // Reset form
+        elements.registerForm.reset();
         showToast('Registration successful!', 'success');
     } catch (error) {
         console.error('Registration error:', error);
@@ -398,15 +442,30 @@ function updateUIForGuest() {
 }
 
 // Modal Management
-function showModal(modalId) {
+function showModal(modalId, show = true) {
     document.querySelectorAll('.modal').forEach(modal => {
         modal.classList.remove('active');
     });
     
+    if (show) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.add('active');
+        }
+    }
+}
+
+function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
-        modal.classList.add('active');
+        modal.classList.remove('active');
     }
+}
+
+function closeAllModals() {
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.classList.remove('active');
+    });
 }
 
 // Opportunities Management
@@ -414,24 +473,67 @@ async function loadOpportunities() {
     try {
         showLoading(elements.featuredOpportunities);
         
-        const snapshot = await db.collection('opportunities')
-            .where('status', '==', 'active')
-            .orderBy('createdAt', 'desc')
-            .limit(6)
-            .get();
+        let snapshot;
+        try {
+            // Try with orderBy first (requires index)
+            snapshot = await db.collection('opportunities')
+                .where('status', '==', 'active')
+                .orderBy('createdAt', 'desc')
+                .limit(6)
+                .get();
+        } catch (indexError) {
+            // If index error, try without orderBy or without status filter
+            console.warn('Index error, trying alternative query:', indexError);
+            try {
+                snapshot = await db.collection('opportunities')
+                    .where('status', '==', 'active')
+                    .limit(6)
+                    .get();
+            } catch (statusError) {
+                // If that also fails, try loading all and filtering client-side
+                console.warn('Status filter error, loading all opportunities:', statusError);
+                snapshot = await db.collection('opportunities')
+                    .limit(20)
+                    .get();
+            }
+        }
         
         opportunities = [];
         snapshot.forEach(doc => {
-            opportunities.push({
-                id: doc.id,
-                ...doc.data()
-            });
+            const data = doc.data();
+            // Only include active opportunities if we loaded all
+            if (!data.status || data.status === 'active') {
+                opportunities.push({
+                    id: doc.id,
+                    ...data
+                });
+            }
         });
+        
+        // Sort manually by createdAt
+        opportunities.sort((a, b) => {
+            const aDate = a.createdAt?.toDate ? a.createdAt.toDate() : (a.createdAt ? new Date(a.createdAt) : new Date(0));
+            const bDate = b.createdAt?.toDate ? b.createdAt.toDate() : (b.createdAt ? new Date(b.createdAt) : new Date(0));
+            return bDate - aDate;
+        });
+        
+        // Limit to 6 for featured
+        opportunities = opportunities.slice(0, 6);
         
         displayFeaturedOpportunities();
     } catch (error) {
         console.error('Error loading opportunities:', error);
-        showError(elements.featuredOpportunities, 'Failed to load opportunities');
+        let errorMessage = 'Failed to load opportunities';
+        if (error.message) {
+            errorMessage += ': ' + error.message;
+        }
+        // Show user-friendly message
+        if (error.code === 'permission-denied') {
+            errorMessage = 'Permission denied. Please check your Firestore rules.';
+        } else if (error.code === 'unavailable') {
+            errorMessage = 'Service temporarily unavailable. Please try again later.';
+        }
+        showError(elements.featuredOpportunities, errorMessage);
     }
 }
 
@@ -439,23 +541,62 @@ async function loadAllOpportunities() {
     try {
         showLoading(elements.allOpportunities);
         
-        const snapshot = await db.collection('opportunities')
-            .where('status', '==', 'active')
-            .orderBy('createdAt', 'desc')
-            .get();
+        let snapshot;
+        try {
+            // Try with orderBy first (requires index)
+            snapshot = await db.collection('opportunities')
+                .where('status', '==', 'active')
+                .orderBy('createdAt', 'desc')
+                .get();
+        } catch (indexError) {
+            // If index error, try without orderBy or without status filter
+            console.warn('Index error, trying alternative query:', indexError);
+            try {
+                snapshot = await db.collection('opportunities')
+                    .where('status', '==', 'active')
+                    .get();
+            } catch (statusError) {
+                // If that also fails, try loading all and filtering client-side
+                console.warn('Status filter error, loading all opportunities:', statusError);
+                snapshot = await db.collection('opportunities')
+                    .get();
+            }
+        }
         
-        opportunities = [];
+        allOpportunities = [];
         snapshot.forEach(doc => {
-            opportunities.push({
-                id: doc.id,
-                ...doc.data()
-            });
+            const data = doc.data();
+            // Only include active opportunities if we loaded all
+            if (!data.status || data.status === 'active') {
+                allOpportunities.push({
+                    id: doc.id,
+                    ...data
+                });
+            }
         });
         
-        displayAllOpportunities();
+        // Sort manually by createdAt
+        allOpportunities.sort((a, b) => {
+            const aDate = a.createdAt?.toDate ? a.createdAt.toDate() : (a.createdAt ? new Date(a.createdAt) : new Date(0));
+            const bDate = b.createdAt?.toDate ? b.createdAt.toDate() : (b.createdAt ? new Date(b.createdAt) : new Date(0));
+            return bDate - aDate;
+        });
+        
+        // Apply current filters
+        applyFilters();
     } catch (error) {
         console.error('Error loading opportunities:', error);
-        showError(elements.allOpportunities, 'Failed to load opportunities');
+        let errorMessage = 'Failed to load opportunities';
+        if (error.message) {
+            errorMessage += ': ' + error.message;
+        }
+        // Show user-friendly message
+        if (error.code === 'permission-denied') {
+            errorMessage = 'Permission denied. Please check your Firestore rules.';
+        } else if (error.code === 'unavailable') {
+            errorMessage = 'Service temporarily unavailable. Please try again later.';
+        }
+        showError(elements.allOpportunities, errorMessage);
     }
 }
 
@@ -1092,7 +1233,7 @@ async function handleCreateOpportunity(e) {
         e.target.reset();
         
         // Close modal
-        showModal('createOpportunityModal', false);
+        closeModal('createOpportunityModal');
         
         // Show success message
         showToast('Opportunity created successfully!', 'success');
@@ -1242,10 +1383,83 @@ function showAdminTab(tabId) {
 }
 
 // Filter functions
+function applyFilters() {
+    // Get filter values
+    const typeFilter = document.getElementById('typeFilter');
+    const categoryFilter = document.getElementById('categoryFilter');
+    
+    const selectedType = typeFilter ? typeFilter.value : 'all';
+    const selectedCategory = categoryFilter ? categoryFilter.value : 'all';
+    
+    // Update current filters
+    currentFilters.type = selectedType;
+    currentFilters.category = selectedCategory;
+    
+    // Filter opportunities
+    let filtered = [...allOpportunities];
+    
+    // Filter by type
+    if (selectedType !== 'all') {
+        filtered = filtered.filter(opp => opp.type === selectedType);
+    }
+    
+    // Filter by category
+    if (selectedCategory !== 'all') {
+        filtered = filtered.filter(opp => opp.category === selectedCategory);
+    }
+    
+    // Update opportunities array with filtered results
+    opportunities = filtered;
+    
+    // Display filtered opportunities
+    displayAllOpportunities();
+    
+    // Show filter status
+    const filterCount = filtered.length;
+    const totalCount = allOpportunities.length;
+    if (filterCount < totalCount) {
+        showToast(`Showing ${filterCount} of ${totalCount} opportunities`, 'info');
+    }
+}
+
 function filterOpportunitiesByCategory(category) {
-    // Implementation for filtering opportunities by category
-    console.log(`Filtering by category: ${category}`);
-    // You would implement the actual filtering logic here
+    // Navigate to opportunities section
+    showSection('opportunities');
+    
+    // Set the category filter
+    const categoryFilter = document.getElementById('categoryFilter');
+    if (categoryFilter) {
+        categoryFilter.value = category;
+    }
+    
+    // Apply filters
+    applyFilters();
+}
+
+function filterOpportunitiesByType(type) {
+    // Navigate to opportunities section
+    showSection('opportunities');
+    
+    // Set the type filter
+    const typeFilter = document.getElementById('typeFilter');
+    if (typeFilter) {
+        typeFilter.value = type;
+    }
+    
+    // Apply filters
+    applyFilters();
+}
+
+function clearFilters() {
+    // Reset filter dropdowns
+    const typeFilter = document.getElementById('typeFilter');
+    const categoryFilter = document.getElementById('categoryFilter');
+    
+    if (typeFilter) typeFilter.value = 'all';
+    if (categoryFilter) categoryFilter.value = 'all';
+    
+    // Apply filters (will show all)
+    applyFilters();
 }
 
 // Additional admin functions (stubs - implement as needed)
@@ -1326,6 +1540,8 @@ async function viewApplication(applicationId) {
 
 // Export functions for HTML onclick handlers
 window.showModal = showModal;
+window.closeModal = closeModal;
+window.closeAllModals = closeAllModals;
 window.showSection = showSection;
 window.showOpportunityDetails = showOpportunityDetails;
 window.removeSaved = removeSaved;
