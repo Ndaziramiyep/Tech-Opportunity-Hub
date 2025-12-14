@@ -1,4 +1,22 @@
-// Firebase Configuration
+/**
+ * Tech Opportunity Hub - Main Application Script
+ * 
+ * A comprehensive platform for managing tech opportunities including jobs,
+ * internships, training programs, and events. Built with Firebase backend.
+ * 
+ * @author Tech Opportunity Hub Team
+ * @version 1.0.0
+ */
+
+// ============================================================================
+// FIREBASE CONFIGURATION
+// ============================================================================
+
+/**
+ * Firebase project configuration
+ * Replace these values with your Firebase project credentials
+ * @type {Object}
+ */
 const firebaseConfig = {
     apiKey: "AIzaSyCkiyURiZjsgjyXt6eFIVLryICq5aXKSt0",
     authDomain: "opportunity-platform.firebaseapp.com",
@@ -9,21 +27,28 @@ const firebaseConfig = {
     measurementId: "G-WEX0B7FM2F"
 };
 
-// Initialize Firebase
+// Initialize Firebase services
 const app = firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-const storage = firebase.storage();
+const auth = firebase.auth();      // Authentication service
+const db = firebase.firestore();    // Firestore database
+const storage = firebase.storage(); // Storage service
 
-// State Management
-let currentUser = null;
-let userRole = 'user';
-let opportunities = [];
-let allOpportunities = []; // Store all opportunities for filtering
-let savedOpportunities = new Set();
-let applications = [];
-let notifications = [];
-let currentFilters = {
+// ============================================================================
+// STATE MANAGEMENT
+// ============================================================================
+
+/**
+ * Global application state
+ * @type {Object}
+ */
+let currentUser = null;              // Currently authenticated user
+let userRole = 'user';               // User role: 'user' or 'admin'
+let opportunities = [];               // Current displayed opportunities
+let allOpportunities = [];           // All opportunities for filtering
+let savedOpportunities = new Set();  // Set of saved opportunity IDs
+let applications = [];                // User's applications
+let notifications = [];               // User's notifications
+let currentFilters = {               // Active filter settings
     type: 'all',
     category: 'all'
 };
@@ -75,7 +100,14 @@ document.addEventListener('DOMContentLoaded', () => {
     setupNavigation();
 });
 
-// Firebase Authentication
+// ============================================================================
+// AUTHENTICATION
+// ============================================================================
+
+/**
+ * Initialize Firebase Authentication and set up auth state listener
+ * Automatically updates UI when user logs in or out
+ */
 function initFirebaseAuth() {
     auth.onAuthStateChanged(async (user) => {
         if (user) {
@@ -516,7 +548,15 @@ function closeAllModals() {
     });
 }
 
-// Opportunities Management
+// ============================================================================
+// OPPORTUNITIES MANAGEMENT
+// ============================================================================
+
+/**
+ * Load featured opportunities for the home page
+ * Fetches up to 6 active opportunities, sorted by creation date
+ * @returns {Promise<void>}
+ */
 async function loadOpportunities() {
     try {
         showLoading(elements.featuredOpportunities);
@@ -959,7 +999,15 @@ async function applyForOpportunity(opportunityId) {
     }
 }
 
-// Dashboard Functions
+// ============================================================================
+// DASHBOARD FUNCTIONS
+// ============================================================================
+
+/**
+ * Load all dashboard data for the current user
+ * Includes applications, saved opportunities, notifications, and profile
+ * @returns {Promise<void>}
+ */
 async function loadDashboardData() {
     if (!currentUser) return;
     
@@ -1163,7 +1211,16 @@ function displayNotifications() {
     `).join('');
 }
 
-// Admin Functions
+// ============================================================================
+// ADMIN FUNCTIONS
+// ============================================================================
+
+/**
+ * Load all admin panel data
+ * Includes opportunities, users, analytics, and categories
+ * Only accessible to admin users
+ * @returns {Promise<void>}
+ */
 async function loadAdminData() {
     if (userRole !== 'admin') return;
     
@@ -1175,33 +1232,96 @@ async function loadAdminData() {
 
 async function loadAllOpportunitiesForAdmin() {
     try {
-        const snapshot = await db.collection('opportunities')
-            .orderBy('createdAt', 'desc')
-            .get();
+        if (!elements.adminOpportunitiesTable) return;
+        
+        // Show loading state
+        elements.adminOpportunitiesTable.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 2rem;">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>Loading opportunities...</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        
+        let snapshot;
+        try {
+            snapshot = await db.collection('opportunities')
+                .orderBy('createdAt', 'desc')
+                .get();
+        } catch (indexError) {
+            // If orderBy fails, try without it
+            console.warn('Index error, loading without orderBy:', indexError);
+            snapshot = await db.collection('opportunities').get();
+        }
         
         elements.adminOpportunitiesTable.innerHTML = '';
         
-        snapshot.forEach(async (doc) => {
+        if (snapshot.empty) {
+            elements.adminOpportunitiesTable.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 2rem;">
+                        <div class="empty-state">
+                            <i class="fas fa-briefcase"></i>
+                            <h3>No opportunities found</h3>
+                            <p>Create your first opportunity to get started</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        // Process all opportunities and count applications
+        const opportunities = [];
+        for (const doc of snapshot.docs) {
             const opp = { id: doc.id, ...doc.data() };
             
             // Count applications
-            const appsSnapshot = await db.collection('applications')
-                .where('opportunityId', '==', opp.id)
-                .get();
+            try {
+                const appsSnapshot = await db.collection('applications')
+                    .where('opportunityId', '==', opp.id)
+                    .get();
+                opp.applicationCount = appsSnapshot.size;
+            } catch (error) {
+                console.warn('Error counting applications for opportunity:', opp.id, error);
+                opp.applicationCount = 0;
+            }
             
+            opportunities.push(opp);
+        }
+        
+        // Sort manually if orderBy wasn't used
+        if (opportunities.length > 0 && !opportunities[0].createdAt) {
+            // No sorting needed if no createdAt
+        } else {
+            opportunities.sort((a, b) => {
+                const aDate = a.createdAt?.toDate ? a.createdAt.toDate() : (a.createdAt ? new Date(a.createdAt) : new Date(0));
+                const bDate = b.createdAt?.toDate ? b.createdAt.toDate() : (b.createdAt ? new Date(b.createdAt) : new Date(0));
+                return bDate - aDate;
+            });
+        }
+        
+        // Display all opportunities
+        opportunities.forEach(opp => {
             const row = document.createElement('tr');
+            const typeLabel = opp.type ? opp.type.charAt(0).toUpperCase() + opp.type.slice(1) : 'N/A';
+            const status = opp.status || 'active';
+            
             row.innerHTML = `
-                <td>${opp.title}</td>
-                <td><span class="opportunity-type type-${opp.type}">${opp.type}</span></td>
-                <td>${getCategoryLabel(opp.category)}</td>
+                <td>${opp.title || 'Untitled'}</td>
+                <td><span class="opportunity-type type-${opp.type || 'job'}">${typeLabel}</span></td>
+                <td>${getCategoryLabel(opp.category || '')}</td>
                 <td>${formatDate(opp.createdAt?.toDate())}</td>
-                <td>${appsSnapshot.size}</td>
-                <td><span class="status-badge status-${opp.status}">${opp.status}</span></td>
+                <td>${opp.applicationCount || 0}</td>
+                <td><span class="status-badge status-${status}">${status}</span></td>
                 <td class="table-actions">
-                    <button class="btn-secondary" onclick="editOpportunity('${opp.id}')">
+                    <button class="btn-secondary" onclick="editOpportunity('${opp.id}')" title="Edit Opportunity">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn-danger" onclick="deleteOpportunity('${opp.id}')">
+                    <button class="btn-danger" onclick="deleteOpportunity('${opp.id}')" title="Delete Opportunity">
                         <i class="fas fa-trash"></i>
                     </button>
                 </td>
@@ -1210,36 +1330,82 @@ async function loadAllOpportunitiesForAdmin() {
         });
     } catch (error) {
         console.error('Error loading opportunities for admin:', error);
+        if (elements.adminOpportunitiesTable) {
+            elements.adminOpportunitiesTable.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 2rem;">
+                        <div class="empty-state">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h3>Error loading opportunities</h3>
+                            <p>${error.message || 'Please try again later'}</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+        showToast('Failed to load opportunities', 'error');
     }
 }
 
 async function loadAllUsers() {
     try {
+        if (!elements.usersTable) return;
+        
+        // Show loading state
+        elements.usersTable.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 2rem;">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>Loading users...</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        
         const snapshot = await db.collection('users').get();
         
         elements.usersTable.innerHTML = '';
+        
+        if (snapshot.empty) {
+            elements.usersTable.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 2rem;">
+                        <div class="empty-state">
+                            <i class="fas fa-users"></i>
+                            <h3>No users found</h3>
+                            <p>Users will appear here once they register</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
         
         snapshot.forEach((doc) => {
             const user = { id: doc.id, ...doc.data() };
             
             const row = document.createElement('tr');
+            const role = user.role || 'user';
+            const isCurrentUser = user.id === currentUser?.uid;
+            
             row.innerHTML = `
-                <td>${user.name}</td>
-                <td>${user.email}</td>
-                <td><span class="user-role">${user.role}</span></td>
+                <td>${user.name || 'Unknown'}</td>
+                <td>${user.email || 'No email'}</td>
+                <td><span class="user-role">${role}</span></td>
                 <td>${formatDate(user.createdAt?.toDate())}</td>
                 <td><span class="status-badge status-active">Active</span></td>
                 <td class="table-actions">
-                    ${user.role !== 'admin' ? `
+                    ${role !== 'admin' ? `
                     <button class="btn-success" onclick="makeAdmin('${user.id}')" title="Make Admin">
                         <i class="fas fa-user-shield"></i> Make Admin
                     </button>
                     ` : `
-                    <button class="btn-warning" onclick="removeAdmin('${user.id}')" title="Remove Admin">
+                    <button class="btn-warning" onclick="removeAdmin('${user.id}')" title="Remove Admin" ${isCurrentUser ? 'disabled style="opacity: 0.5;"' : ''}>
                         <i class="fas fa-user-slash"></i> Remove Admin
                     </button>
                     `}
-                    <button class="btn-danger" onclick="deleteUser('${user.id}')" title="Delete User">
+                    <button class="btn-danger" onclick="deleteUser('${user.id}')" title="Delete User" ${isCurrentUser ? 'disabled style="opacity: 0.5;"' : ''}>
                         <i class="fas fa-trash"></i>
                     </button>
                 </td>
@@ -1248,6 +1414,20 @@ async function loadAllUsers() {
         });
     } catch (error) {
         console.error('Error loading users:', error);
+        if (elements.usersTable) {
+            elements.usersTable.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 2rem;">
+                        <div class="empty-state">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h3>Error loading users</h3>
+                            <p>${error.message || 'Please try again later'}</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+        showToast('Failed to load users', 'error');
     }
 }
 
@@ -1474,7 +1654,15 @@ function showAdminTab(tabId) {
     }
 }
 
-// Filter functions
+// ============================================================================
+// FILTER FUNCTIONS
+// ============================================================================
+
+/**
+ * Apply active filters to opportunities
+ * Filters by type and/or category based on current filter settings
+ * Updates the display and shows filter status
+ */
 function applyFilters() {
     // Get filter values
     const typeFilter = document.getElementById('typeFilter');
