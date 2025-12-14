@@ -1201,11 +1201,15 @@ async function loadAllUsers() {
                 <td><span class="status-badge status-active">Active</span></td>
                 <td class="table-actions">
                     ${user.role !== 'admin' ? `
-                    <button class="btn-success" onclick="makeAdmin('${user.id}')">
-                        Make Admin
+                    <button class="btn-success" onclick="makeAdmin('${user.id}')" title="Make Admin">
+                        <i class="fas fa-user-shield"></i> Make Admin
                     </button>
-                    ` : ''}
-                    <button class="btn-danger" onclick="deleteUser('${user.id}')">
+                    ` : `
+                    <button class="btn-warning" onclick="removeAdmin('${user.id}')" title="Remove Admin">
+                        <i class="fas fa-user-slash"></i> Remove Admin
+                    </button>
+                    `}
+                    <button class="btn-danger" onclick="deleteUser('${user.id}')" title="Delete User">
                         <i class="fas fa-trash"></i>
                     </button>
                 </td>
@@ -1586,6 +1590,27 @@ async function makeAdmin(userId) {
     }
 }
 
+async function removeAdmin(userId) {
+    // Prevent removing admin from current user
+    if (userId === currentUser?.uid) {
+        showToast('You cannot remove admin privileges from yourself', 'warning');
+        return;
+    }
+    
+    if (confirm('Are you sure you want to remove admin privileges from this user?')) {
+        try {
+            await db.collection('users').doc(userId).update({
+                role: 'user'
+            });
+            showToast('Admin privileges removed successfully', 'success');
+            loadAllUsers();
+        } catch (error) {
+            console.error('Error removing admin privileges:', error);
+            showToast('Failed to remove admin privileges', 'error');
+        }
+    }
+}
+
 async function deleteUser(userId) {
     if (confirm('Are you sure you want to delete this user?')) {
         try {
@@ -1645,3 +1670,4 @@ window.clearFilters = clearFilters;
 window.applyFilters = applyFilters;
 window.filterOpportunitiesByCategory = filterOpportunitiesByCategory;
 window.filterOpportunitiesByType = filterOpportunitiesByType;
+window.removeAdmin = removeAdmin;
