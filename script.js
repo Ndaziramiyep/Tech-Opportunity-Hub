@@ -392,21 +392,22 @@ function showSection(sectionId) {
             case 'events':
                 loadEvents();
                 break;
-            case 'about':
-                // Load stats for about page
-                if (document.getElementById('statUsers')) {
-                    loadAnalytics();
-                }
-                break;
-            case 'contact':
-                // Contact page is static, no data loading needed
-                break;
             case 'dashboard':
                 if (currentUser) loadDashboardData();
                 break;
             case 'admin':
                 if (userRole === 'admin') loadAdminData();
                 break;
+        }
+    }
+    
+    // Toggle footer visibility
+    const footer = document.getElementById('mainFooter');
+    if (footer) {
+        if (sectionId === 'dashboard' || sectionId === 'admin') {
+            footer.style.display = 'none';
+        } else {
+            footer.style.display = 'block';
         }
     }
     
@@ -2932,4 +2933,197 @@ async function approveEvent(eventId) {
         console.error('Error approving event:', error);
         showToast('Failed to approve event', 'error');
     }
+}
+
+
+// Load all events for admin panel
+async function loadAllEventsForAdmin() {
+    try {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const tableElement = document.getElementById('adminEventsTable');
+        if (!tableElement) {
+            console.warn('adminEventsTable element not found');
+            return;
+        }
+        
+        console.log('Loading events for admin...');
+        
+        tableElement.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 2rem;">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>Loading events...</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        
+        let snapshot;
+        try {
+            snapshot = await db.collection('opportunities')
+                .where('type', '==', 'event')
+                .orderBy('createdAt', 'desc')
+                .get();
+        } catch (indexError) {
+            console.warn('Index error, loading without orderBy:', indexError);
+            snapshot = await db.collection('opportunities')
+                .where('type', '==', 'event')
+                .get();
+        }
+        
+        tableElement.innerHTML = '';
+        
+        if (snapshot.empty) {
+            tableElement.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 2rem;">
+                        <div class="empty-state">
+                            <i class="fas fa-calendar"></i>
+                            <h3>No events found</h3>
+                            <p>Create your first event to get started</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        const events = [];
+        for (const doc of snapshot.docs) {
+            const event = { id: doc.id, ...doc.data() };
+            
+            try {
+                const appsSnapshot = await db.collection('applications')
+                    .where('opportunityId', '==', event.id)
+                    .get();
+                event.applicationCount = appsSnapshot.size;
+            } catch (error) {
+                console.warn('Error counting applications for event:', event.id, error);
+                event.applicationCount = 0;
+            }
+            
+            events.push(event);
+        }
+        
+        if (events.length > 0) {
+            events.sort((a, b) => {
+                const aDate = a.createdAt?.toDate ? a.createdAt.toDate() : (a.createdAt ? new Date(a.createdAt) : new Date(0));
+                const bDate = b.createdAt?.toDate ? b.createdAt.toDate() : (b.createdAt ? new Date(b.createdAt) : new Date(0));
+                return bDate - aDate;
+            });
+        }
+        
+        if (events.length === 0) {
+            tableElement.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 2rem;">
+                        <div class="empty-state">
+                            <i class="fas fa-calendar"></i>
+                            <h3>No events found</h3>
+                            <p>Create your first event to get started</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        } else {
+            events.forEach(event => {
+                const row = document.createElement('tr');
+                const status = event.status || 'active';
+                
+                row.innerHTML = `
+                    <td>${event.title || 'Untitled'}</td>
+                    <td><span class="opportunity-type type-event">Event</span></td>
+                    <td>${getCategoryLabel(event.category || '')}</td>
+                    <td>${formatDate(event.createdAt?.toDate())}</td>
+                    <td>${event.applicationCount || 0}</td>
+                    <td><span class="status-badge status-${status}">${status}</span></td>
+                    <td class="table-actions">
+                        <button class="btn-secondary" onclick="editOpportunity('${event.id}')" title="Edit Event">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-danger" onclick="deleteOpportunity('${event.id}')" title="Delete Event">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tableElement.appendChild(row);
+            });
+        }
+        
+        console.log(`Loaded ${events.length} events for admin`);
+    } catch (error) {
+        console.error('Error loading events for admin:', error);
+        const tableElement = document.getElementById('adminEventsTable');
+        if (tableElement) {
+            tableElement.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 2rem;">
+                        <div class="empty-state">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h3>Error loading events</h3>
+                            <p>${error.message || 'Please try again later'}</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+        showToast('Failed to load events', 'error');
+    }
+}
+
+// Handle submit event form
+async function handleSubmitEvent(e) {
+    e.preventDefault();
+    
+    if (!currentUser) {
+        showToast('Please login to submit an event', 'error');
+        return;
+    }
+    
+    const event = {
+        title: document.getElementById('eventTitle').value,
+        type: 'event',
+        category: document.getElementById('eventCategory').value,
+        company: document.getElementById('eventOrganizer').value,
+        location: document.getElementById('eventLocation').value,
+        description: document.getElementById('eventDescription').value,
+        requirements: document.getElementById('eventRequirements').value || '',
+        benefits: '',
+        salary: '',
+        link: document.getElementById('eventLink').value,
+        deadline: document.getElementById('eventDate').value,
+        status: userRole === 'admin' ? 'active' : 'pending',
+        requiresApproval: userRole !== 'admin',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        createdBy: currentUser.uid,
+        createdByName: currentUser.displayName
+    };
+    
+    try {
+        showToast('Submitting event...', 'info');
+        await db.collection('opportunities').add(event);
+        
+        document.getElementById('submitEventForm').reset();
+        closeModal('submitEventModal');
+        
+        if (userRole === 'admin') {
+            showToast('Event created successfully!', 'success');
+            loadEvents();
+            if (window.location.hash === '#admin') {
+                loadAllEventsForAdmin();
+            }
+        } else {
+            showToast('Event submitted for approval!', 'success');
+        }
+    } catch (error) {
+        console.error('Error submitting event:', error);
+        showToast('Failed to submit event', 'error');
+    }
+}
+
+// Load analytics charts (placeholder)
+async function loadAnalyticsCharts() {
+    console.log('Analytics charts feature - placeholder for future implementation');
 }

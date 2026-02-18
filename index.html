@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,512 +12,144 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 </head>
+
 <body>
     <main>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="nav-brand">
-                <i class="fas fa-briefcase"></i>
-                <span>TechOpportunityHub</span>
-            </div>
-            <div class="nav-links">
-                <a href="#home" class="nav-link active"><i class="fas fa-home"></i> Home</a>
-                <a href="#opportunities" class="nav-link"><i class="fas fa-search"></i> Opportunities</a>
-                <a href="#events" class="nav-link"><i class="fas fa-calendar"></i> Events</a>
-                <a href="#about" class="nav-link"><i class="fas fa-info-circle"></i> About</a>
-                <a href="#contact" class="nav-link"><i class="fas fa-envelope"></i> Contact</a>
-                <div class="nav-user" id="userDropdown">
-                    <i class="fas fa-user-circle"></i>
-                    <span>Guest</span>
-                    <i class="fas fa-chevron-down"></i>
-                    <div class="dropdown-menu" id="userMenu">
-                        <a href="#" id="loginBtn">Login</a>
-                        <a href="#" id="registerBtn">Register</a>
-                        <div id="authLinks" style="display: none;">
-                            <a href="#dashboard">Dashboard</a>
-                            <a href="#profile">Profile</a>
-                            <a href="#" id="logoutBtn">Logout</a>
-                        </div>
-                        <div id="adminLinks" style="display: none;">
-                            <hr>
-                            <a href="#admin">Admin Panel</a>
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-brand">
+                    <i class="fas fa-briefcase"></i>
+                    <span>TechOpportunityHub</span>
+                </div>
+                <div class="nav-links">
+                    <a href="#home" class="nav-link active"><i class="fas fa-home"></i> Home</a>
+                    <a href="#opportunities" class="nav-link"><i class="fas fa-search"></i> Opportunities</a>
+                    <a href="#events" class="nav-link"><i class="fas fa-calendar"></i> Events</a>
+                    <div class="nav-user" id="userDropdown">
+                        <i class="fas fa-user-circle"></i>
+                        <span>Guest</span>
+                        <i class="fas fa-chevron-down"></i>
+                        <div class="dropdown-menu" id="userMenu">
+                            <a href="#" id="loginBtn">Login</a>
+                            <a href="#" id="registerBtn">Register</a>
+                            <div id="authLinks" style="display: none;">
+                                <a href="#dashboard">Dashboard</a>
+                                <a href="#profile">Profile</a>
+                                <a href="#" id="logoutBtn">Logout</a>
+                            </div>
+                            <div id="adminLinks" style="display: none;">
+                                <hr>
+                                <a href="#admin">Admin Panel</a>
+                            </div>
                         </div>
                     </div>
                 </div>
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
-            <button class="mobile-menu-btn" id="mobileMenuBtn">
-                <i class="fas fa-bars"></i>
-            </button>
-        </div>
-    </nav>
+        </nav>
 
-    <!-- Mobile Menu -->
-    <div class="mobile-menu" id="mobileMenu">
-        <a href="#home" class="mobile-nav-link"><i class="fas fa-home"></i> Home</a>
-        <a href="#opportunities" class="mobile-nav-link"><i class="fas fa-search"></i> Opportunities</a>
-        <a href="#events" class="mobile-nav-link"><i class="fas fa-calendar"></i> Events</a>
-        <a href="#about" class="mobile-nav-link"><i class="fas fa-info-circle"></i> About</a>
-        <a href="#contact" class="mobile-nav-link"><i class="fas fa-envelope"></i> Contact</a>
-        <hr>
-        <a href="#" id="mobileLoginBtn" class="mobile-nav-link"><i class="fas fa-sign-in-alt"></i> Login</a>
-        <a href="#" id="mobileRegisterBtn" class="mobile-nav-link"><i class="fas fa-user-plus"></i> Register</a>
-        <div id="mobileAuthLinks" style="display: none;">
-            <a href="#dashboard" class="mobile-nav-link"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-            <a href="#profile" class="mobile-nav-link"><i class="fas fa-user"></i> Profile</a>
-            <a href="#" id="mobileLogoutBtn" class="mobile-nav-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <main id="mainContent">
-        <!-- Home Section -->
-        <section id="home" class="page-section active">
-            <div class="hero">
-                <div class="hero-content">
-                    <h1>Find Your Next Tech Opportunity</h1>
-                    <p>Discover jobs, internships, training programs, and events in the tech industry</p>
-                    <button class="btn-primary" id="exploreBtn">Explore Opportunities</button>
-                </div>
-                <div class="hero-stats">
-                    <div class="stat-card">
-                        <i class="fas fa-briefcase"></i>
-                        <h3>500+</h3>
-                        <p>Tech Jobs</p>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fas fa-graduation-cap"></i>
-                        <h3>200+</h3>
-                        <p>Internships</p>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fas fa-chalkboard-teacher"></i>
-                        <h3>150+</h3>
-                        <p>Training Programs</p>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fas fa-calendar"></i>
-                        <h3>100+</h3>
-                        <p>Upcoming Events</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Categories -->
-            <div class="categories">
-                <h2>Browse by Category</h2>
-                <div class="category-grid">
-                    <div class="category-card" data-category="jobs">
-                        <i class="fas fa-briefcase"></i>
-                        <h3>Jobs</h3>
-                        <p>Full-time & Part-time positions</p>
-                    </div>
-                    <div class="category-card" data-category="internships">
-                        <i class="fas fa-graduation-cap"></i>
-                        <h3>Internships</h3>
-                        <p>Gain experience in tech companies</p>
-                    </div>
-                    <div class="category-card" data-category="training">
-                        <i class="fas fa-chalkboard-teacher"></i>
-                        <h3>Training</h3>
-                        <p>Skill development programs</p>
-                    </div>
-                    <div class="category-card" data-category="events">
-                        <i class="fas fa-calendar"></i>
-                        <h3>Events</h3>
-                        <p>Tech conferences & meetups</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Featured Opportunities -->
-            <div class="featured">
-                <h2>Featured Opportunities</h2>
-                <div class="opportunities-grid" id="featuredOpportunities">
-                    <!-- Opportunities will be loaded here -->
-                </div>
-            </div>
-        </section>
-
-        <!-- Opportunities Section -->
-        <section id="opportunities" class="page-section">
-            <div class="page-header">
-                <h1>All Opportunities</h1>
-                <div class="filters">
-                    <select id="typeFilter" class="filter-select">
-                        <option value="all">All Types</option>
-                        <option value="job">Jobs</option>
-                        <option value="internship">Internships</option>
-                        <option value="training">Training</option>
-                        <option value="event">Events</option>
-                    </select>
-                    <select id="categoryFilter" class="filter-select">
-                        <option value="all">All Categories</option>
-                        <option value="web-dev">Web Development</option>
-                        <option value="mobile-dev">Mobile Development</option>
-                        <option value="data-science">Data Science</option>
-                        <option value="ai-ml">AI/ML</option>
-                        <option value="cybersecurity">Cybersecurity</option>
-                        <option value="cloud">Cloud Computing</option>
-                    </select>
-                    <button class="btn-secondary" id="applyFilters">Apply Filters</button>
-                    <button class="btn-secondary" id="clearFilters" style="display: none;">
-                        <i class="fas fa-times"></i> Clear Filters
-                    </button>
-                    <button class="btn-primary" id="createOpportunityBtn" style="display: none;">
-                        <i class="fas fa-plus"></i> Create New
-                    </button>
-                </div>
-            </div>
-            <div class="opportunities-container">
-                <div class="opportunities-grid" id="allOpportunities">
-                    <!-- All opportunities will be loaded here -->
-                </div>
-            </div>
-        </section>
-
-        <!-- Events Section -->
-        <section id="events" class="page-section">
-            <div class="page-header">
-                <h1>Upcoming Events</h1>
-                <p>Discover tech conferences, meetups, workshops, and networking events</p>
-                <div style="margin-top: 1rem;">
-                    <button class="btn-primary" id="submitEventBtn" style="display: none;">
-                        <i class="fas fa-plus"></i> Submit an Event
-                    </button>
-                </div>
-            </div>
-            <div class="opportunities-container">
-                <div class="opportunities-grid" id="eventsList">
-                    <!-- Events will be loaded here -->
-                </div>
-            </div>
-        </section>
-
-        <!-- Dashboard Section -->
-        <section id="dashboard" class="page-section">
-            <div class="page-header">
-                <h1>Dashboard</h1>
-            </div>
-            <div class="dashboard-container">
-                <div class="dashboard-sidebar">
-                    <div class="user-info-card">
-                        <div class="user-avatar">
-                            <i class="fas fa-user-circle"></i>
-                        </div>
-                        <h3 id="userName">Guest User</h3>
-                        <p id="userEmail">guest@example.com</p>
-                        <span class="user-role" id="userRole">Guest</span>
-                    </div>
-                    <div class="dashboard-menu">
-                        <a href="#" class="menu-item active" data-tab="my-applications">
-                            <i class="fas fa-file-alt"></i> My Applications
-                        </a>
-                        <a href="#" class="menu-item" data-tab="saved-opportunities">
-                            <i class="fas fa-bookmark"></i> Saved Opportunities
-                        </a>
-                        <a href="#" class="menu-item" data-tab="profile">
-                            <i class="fas fa-user"></i> Profile Settings
-                        </a>
-                        <a href="#" class="menu-item" data-tab="notifications" id="notificationsTab">
-                            <i class="fas fa-bell"></i> Notifications
-                            <span class="notification-badge" id="notificationCount">0</span>
-                        </a>
-                    </div>
-                </div>
-                <div class="dashboard-content">
-                    <div class="dashboard-tab active" id="my-applications">
-                        <h2>My Applications</h2>
-                        <div class="applications-list" id="applicationsList">
-                            <!-- Applications will be loaded here -->
-                        </div>
-                    </div>
-                    <div class="dashboard-tab" id="saved-opportunities">
-                        <h2>Saved Opportunities</h2>
-                        <div class="saved-list" id="savedList">
-                            <!-- Saved opportunities will be loaded here -->
-                        </div>
-                    </div>
-                    <div class="dashboard-tab" id="profile">
-                        <h2>Profile Settings</h2>
-                        <div class="profile-form">
-                            <div class="form-group">
-                                <label for="profileName">Full Name</label>
-                                <input type="text" id="profileName" class="form-input">
-                            </div>
-                            <div class="form-group">
-                                <label for="profileEmail">Email</label>
-                                <input type="email" id="profileEmail" class="form-input" disabled>
-                            </div>
-                            <div class="form-group">
-                                <label for="profilePhone">Phone Number</label>
-                                <input type="tel" id="profilePhone" class="form-input">
-                            </div>
-                            <div class="form-group">
-                                <label for="profileSkills">Skills (comma separated)</label>
-                                <input type="text" id="profileSkills" class="form-input" placeholder="JavaScript, React, Node.js, etc.">
-                            </div>
-                            <div class="form-group">
-                                <label for="profileBio">Bio</label>
-                                <textarea id="profileBio" class="form-input" rows="4"></textarea>
-                            </div>
-                            <button class="btn-primary" id="updateProfileBtn">Update Profile</button>
-                        </div>
-                    </div>
-                    <div class="dashboard-tab" id="notifications">
-                        <h2>Notifications</h2>
-                        <div class="notifications-list" id="notificationsList">
-                            <!-- Notifications will be loaded here -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Admin Panel -->
-        <section id="admin" class="page-section">
-            <div class="page-header">
-                <h1>Admin Panel</h1>
-            </div>
-            <div class="admin-container">
-                <div class="admin-sidebar">
-                    <div class="admin-menu">
-                        <a href="#" class="admin-menu-item active" data-admin-tab="manage-opportunities">
-                            <i class="fas fa-briefcase"></i> Manage Opportunities
-                        </a>
-                        <a href="#" class="admin-menu-item" data-admin-tab="manage-events">
-                            <i class="fas fa-calendar"></i> Manage Events
-                        </a>
-                        <a href="#" class="admin-menu-item" data-admin-tab="manage-users">
-                            <i class="fas fa-users"></i> Manage Users
-                        </a>
-                        <a href="#" class="admin-menu-item" data-admin-tab="analytics">
-                            <i class="fas fa-chart-bar"></i> Analytics
-                        </a>
-                        <a href="#" class="admin-menu-item" data-admin-tab="categories">
-                            <i class="fas fa-tags"></i> Manage Categories
-                        </a>
-                    </div>
-                </div>
-                <div class="admin-content">
-                    <div class="admin-tab active" id="manage-opportunities">
-                        <div class="admin-header">
-                            <h2>All Opportunities</h2>
-                            <button class="btn-primary" id="adminCreateOpportunity">
-                                <i class="fas fa-plus"></i> Add New Opportunity
-                            </button>
-                        </div>
-                        <div class="admin-table-container">
-                            <table class="admin-table">
-                                <thead>
-                                    <tr>
-                                        <th>Title</th>
-                                        <th>Type</th>
-                                        <th>Category</th>
-                                        <th>Posted Date</th>
-                                        <th>Applications</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="adminOpportunitiesTable">
-                                    <!-- Admin opportunities will be loaded here -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    <div class="admin-tab" id="manage-users">
-                        <h2>User Management</h2>
-                        <div class="admin-table-container">
-                            <table class="admin-table">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Email</th>
-                                        <th>Role</th>
-                                        <th>Joined Date</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="usersTable">
-                                    <!-- Users will be loaded here -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    <div class="admin-tab" id="analytics">
-                        <h2>Platform Analytics</h2>
-                        <div class="analytics-grid">
-                            <div class="analytics-card">
-                                <h3>Total Opportunities</h3>
-                                <p id="totalOpportunities">0</p>
-                            </div>
-                            <div class="analytics-card">
-                                <h3>Total Users</h3>
-                                <p id="totalUsers">0</p>
-                            </div>
-                            <div class="analytics-card">
-                                <h3>Total Applications</h3>
-                                <p id="totalApplications">0</p>
-                            </div>
-                            <div class="analytics-card">
-                                <h3>Active Opportunities</h3>
-                                <p id="activeOpportunities">0</p>
-                            </div>
-                        </div>
-                        <div class="analytics-charts">
-                            <div class="chart-container">
-                                <h3>Opportunities by Type</h3>
-                                <canvas id="opportunitiesTypeChart"></canvas>
-                            </div>
-                            <div class="chart-container">
-                                <h3>Applications Over Time</h3>
-                                <canvas id="applicationsChart"></canvas>
-                            </div>
-                            <div class="chart-container">
-                                <h3>User Growth</h3>
-                                <canvas id="usersChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="admin-tab" id="user-logs">
-                        <div class="admin-header">
-                            <h2>User Activity Logs</h2>
-                            <div>
-                                <button class="btn-secondary" onclick="exportLogsToPDF()">
-                                    <i class="fas fa-file-pdf"></i> Export PDF
-                                </button>
-                                <button class="btn-danger" onclick="clearAllLogs()">
-                                    <i class="fas fa-trash"></i> Clear All Logs
-                                </button>
-                            </div>
-                        </div>
-                        <div class="admin-table-container">
-                            <table class="admin-table">
-                                <thead>
-                                    <tr>
-                                        <th>User</th>
-                                        <th>Action</th>
-                                        <th>Details</th>
-                                        <th>Timestamp</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="userLogsTable">
-                                    <!-- User logs will be loaded here -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    <div class="admin-tab" id="categories">
-                        <div class="admin-header">
-                            <h2>Categories Management</h2>
-                            <button class="btn-primary" id="addCategoryBtn">
-                                <i class="fas fa-plus"></i> Add Category
-                            </button>
-                        </div>
-                        <div class="categories-management">
-                            <div class="categories-list" id="categoriesList">
-                                <!-- Categories will be loaded here -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <!-- Modals -->
-    <div class="modal" id="loginModal">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <h2>Login</h2>
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="loginEmail">Email</label>
-                    <input type="email" id="loginEmail" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label for="loginPassword">Password</label>
-                    <input type="password" id="loginPassword" class="form-input" required>
-                </div>
-                <button type="submit" class="btn-primary">Login</button>
-            </form>
-            <p class="modal-footer">
-                Don't have an account? <a href="#" id="switchToRegister">Register here</a>
-            </p>
-        </div>
-    </div>
-
-    <div class="modal" id="registerModal">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <h2>Register</h2>
-            <form id="registerForm">
-                <div class="form-group">
-                    <label for="registerName">Full Name</label>
-                    <input type="text" id="registerName" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label for="registerEmail">Email</label>
-                    <input type="email" id="registerEmail" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label for="registerPassword">Password</label>
-                    <input type="password" id="registerPassword" class="form-input" required minlength="6">
-                </div>
-                <div class="form-group">
-                    <label for="registerConfirmPassword">Confirm Password</label>
-                    <input type="password" id="registerConfirmPassword" class="form-input" required>
-                </div>
-                <button type="submit" class="btn-primary">Register</button>
-            </form>
-            <p class="modal-footer">
-                Already have an account? <a href="#" id="switchToLogin">Login here</a>
-            </p>
-        </div>
-    </div>
-
-    <div class="modal" id="opportunityModal">
-        <div class="modal-content modal-lg">
-            <span class="close-modal">&times;</span>
-            <div id="opportunityDetails">
-                <!-- Opportunity details will be loaded here -->
+        <!-- Mobile Menu -->
+        <div class="mobile-menu" id="mobileMenu">
+            <a href="#home" class="mobile-nav-link"><i class="fas fa-home"></i> Home</a>
+            <a href="#opportunities" class="mobile-nav-link"><i class="fas fa-search"></i> Opportunities</a>
+            <a href="#events" class="mobile-nav-link"><i class="fas fa-calendar"></i> Events</a>
+            <hr>
+            <a href="#" id="mobileLoginBtn" class="mobile-nav-link"><i class="fas fa-sign-in-alt"></i> Login</a>
+            <a href="#" id="mobileRegisterBtn" class="mobile-nav-link"><i class="fas fa-user-plus"></i> Register</a>
+            <div id="mobileAuthLinks" style="display: none;">
+                <a href="#dashboard" class="mobile-nav-link"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="#profile" class="mobile-nav-link"><i class="fas fa-user"></i> Profile</a>
+                <a href="#" id="mobileLogoutBtn" class="mobile-nav-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
         </div>
-    </div>
 
-    <div class="modal" id="createOpportunityModal">
-        <div class="modal-content modal-lg">
-            <span class="close-modal">&times;</span>
-            <h2>Create New Opportunity</h2>
-            <form id="createOpportunityForm">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="opportunityTitle">Title *</label>
-                        <input type="text" id="opportunityTitle" class="form-input" required>
+        <!-- Main Content -->
+        <main id="mainContent">
+            <!-- Home Section -->
+            <section id="home" class="page-section active">
+                <div class="hero">
+                    <div class="hero-content">
+                        <h1>Find Your Next Tech Opportunity</h1>
+                        <p>Discover jobs, internships, training programs, and events in the tech industry</p>
+                        <button class="btn-primary" id="exploreBtn">Explore Opportunities</button>
                     </div>
-                    <div class="form-group">
-                        <label for="opportunityType">Type *</label>
-                        <select id="opportunityType" class="form-input" required>
-                            <option value="">Select Type</option>
-                            <option value="job">Job</option>
-                            <option value="internship">Internship</option>
+                    <div class="hero-stats">
+                        <div class="stat-card">
+                            <i class="fas fa-briefcase"></i>
+                            <h3>500+</h3>
+                            <p>Tech Jobs</p>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-graduation-cap"></i>
+                            <h3>200+</h3>
+                            <p>Internships</p>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                            <h3>150+</h3>
+                            <p>Training Programs</p>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-calendar"></i>
+                            <h3>100+</h3>
+                            <p>Upcoming Events</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Categories -->
+                <div class="categories">
+                    <h2>Browse by Category</h2>
+                    <div class="category-grid">
+                        <div class="category-card" data-category="jobs">
+                            <i class="fas fa-briefcase"></i>
+                            <h3>Jobs</h3>
+                            <p>Full-time & Part-time positions</p>
+                        </div>
+                        <div class="category-card" data-category="internships">
+                            <i class="fas fa-graduation-cap"></i>
+                            <h3>Internships</h3>
+                            <p>Gain experience in tech companies</p>
+                        </div>
+                        <div class="category-card" data-category="training">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                            <h3>Training</h3>
+                            <p>Skill development programs</p>
+                        </div>
+                        <div class="category-card" data-category="events">
+                            <i class="fas fa-calendar"></i>
+                            <h3>Events</h3>
+                            <p>Tech conferences & meetups</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Featured Opportunities -->
+                <div class="featured">
+                    <h2>Featured Opportunities</h2>
+                    <div class="opportunities-grid" id="featuredOpportunities">
+                        <!-- Opportunities will be loaded here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Opportunities Section -->
+            <section id="opportunities" class="page-section">
+                <div class="page-header">
+                    <h1>All Opportunities</h1>
+                    <div class="filters">
+                        <select id="typeFilter" class="filter-select">
+                            <option value="all">All Types</option>
+                            <option value="job">Jobs</option>
+                            <option value="internship">Internships</option>
                             <option value="training">Training</option>
-                            <option value="event">Event</option>
+                            <option value="event">Events</option>
                         </select>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="opportunityCategory">Category *</label>
-                        <select id="opportunityCategory" class="form-input" required>
-                            <option value="">Select Category</option>
+                        <select id="categoryFilter" class="filter-select">
+                            <option value="all">All Categories</option>
                             <option value="web-dev">Web Development</option>
                             <option value="mobile-dev">Mobile Development</option>
                             <option value="data-science">Data Science</option>
@@ -524,548 +157,646 @@
                             <option value="cybersecurity">Cybersecurity</option>
                             <option value="cloud">Cloud Computing</option>
                         </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="opportunityDeadline">Deadline</label>
-                        <input type="date" id="opportunityDeadline" class="form-input">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="opportunityCompany">Company/Organization</label>
-                    <input type="text" id="opportunityCompany" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label for="opportunityLocation">Location</label>
-                    <input type="text" id="opportunityLocation" class="form-input" placeholder="e.g., Remote, Kigali, Rwanda">
-                </div>
-                <div class="form-group">
-                    <label for="opportunityDescription">Description *</label>
-                    <textarea id="opportunityDescription" class="form-input" rows="5" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="opportunityRequirements">Requirements</label>
-                    <textarea id="opportunityRequirements" class="form-input" rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="opportunityBenefits">Benefits</label>
-                    <textarea id="opportunityBenefits" class="form-input" rows="3"></textarea>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="opportunitySalary">Salary/Stipend</label>
-                        <input type="text" id="opportunitySalary" class="form-input">
-                    </div>
-                    <div class="form-group">
-                        <label for="opportunityLink">Application Link</label>
-                        <input type="url" id="opportunityLink" class="form-input">
+                        <button class="btn-secondary" id="applyFilters">Apply Filters</button>
+                        <button class="btn-secondary" id="clearFilters" style="display: none;">
+                            <i class="fas fa-times"></i> Clear Filters
+                        </button>
+                        <button class="btn-primary" id="createOpportunityBtn" style="display: none;">
+                            <i class="fas fa-plus"></i> Create New
+                        </button>
                     </div>
                 </div>
-                <div class="form-actions">
-                    <button type="button" class="btn-secondary" onclick="closeModal('createOpportunityModal')">
-                        <i class="fas fa-times"></i> Cancel
-                    </button>
-                    <button type="submit" class="btn-primary">
-                        <i class="fas fa-plus"></i> Create Opportunity
-                    </button>
+                <div class="opportunities-container">
+                    <div class="opportunities-grid" id="allOpportunities">
+                        <!-- All opportunities will be loaded here -->
+                    </div>
                 </div>
-            </form>
-        </div>
-    </div>
+            </section>
 
-    <!-- Toast Notifications -->
-    <div class="toast-container" id="toastContainer"></div>
-
-    <!-- About Section -->
-    <section id="about" class="page-section">
-        <div class="page-header">
-            <h1>About Tech Opportunity Hub</h1>
-            <p>Connecting tech talent with opportunities that matter</p>
-        </div>
-        
-        <!-- Hero Section -->
-        <div class="about-hero">
-            <div class="about-hero-content">
-                <h2>Empowering Tech Careers Across Africa</h2>
-                <p>Tech Opportunity Hub is the premier platform connecting tech professionals, students, and organizations. We bridge the gap between talent and opportunity, making career growth accessible to everyone in the tech ecosystem.</p>
-            </div>
-        </div>
-
-        <div class="about-container">
-            <!-- Stats Section -->
-            <div class="about-stats">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-users"></i>
+            <!-- Events Section -->
+            <section id="events" class="page-section">
+                <div class="page-header">
+                    <h1>Upcoming Events</h1>
+                    <p>Discover tech conferences, meetups, workshops, and networking events</p>
+                    <div style="margin-top: 1rem;">
+                        <button class="btn-primary" id="submitEventBtn" style="display: none;">
+                            <i class="fas fa-plus"></i> Submit an Event
+                        </button>
                     </div>
-                    <div class="stat-number" id="statUsers">0</div>
-                    <div class="stat-label">Active Users</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
+                <div class="opportunities-container">
+                    <div class="opportunities-grid" id="eventsList">
+                        <!-- Events will be loaded here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="page-section">
+                <div class="page-header">
+                    <h1>Dashboard</h1>
+                </div>
+                <div class="dashboard-container">
+                    <div class="dashboard-sidebar">
+                        <div class="user-info-card">
+                            <div class="user-avatar">
+                                <i class="fas fa-user-circle"></i>
+                            </div>
+                            <h3 id="userName">Guest User</h3>
+                            <p id="userEmail">guest@example.com</p>
+                            <span class="user-role" id="userRole">Guest</span>
+                        </div>
+                        <div class="dashboard-menu">
+                            <a href="#" class="menu-item active" data-tab="my-applications">
+                                <i class="fas fa-file-alt"></i> My Applications
+                            </a>
+                            <a href="#" class="menu-item" data-tab="saved-opportunities">
+                                <i class="fas fa-bookmark"></i> Saved Opportunities
+                            </a>
+                            <a href="#" class="menu-item" data-tab="profile">
+                                <i class="fas fa-user"></i> Profile Settings
+                            </a>
+                            <a href="#" class="menu-item" data-tab="notifications" id="notificationsTab">
+                                <i class="fas fa-bell"></i> Notifications
+                                <span class="notification-badge" id="notificationCount">0</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="dashboard-content">
+                        <div class="dashboard-tab active" id="my-applications">
+                            <h2>My Applications</h2>
+                            <div class="applications-list" id="applicationsList">
+                                <!-- Applications will be loaded here -->
+                            </div>
+                        </div>
+                        <div class="dashboard-tab" id="saved-opportunities">
+                            <h2>Saved Opportunities</h2>
+                            <div class="saved-list" id="savedList">
+                                <!-- Saved opportunities will be loaded here -->
+                            </div>
+                        </div>
+                        <div class="dashboard-tab" id="profile">
+                            <h2>Profile Settings</h2>
+                            <div class="profile-form">
+                                <div class="form-group">
+                                    <label for="profileName">Full Name</label>
+                                    <input type="text" id="profileName" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label for="profileEmail">Email</label>
+                                    <input type="email" id="profileEmail" class="form-input" disabled>
+                                </div>
+                                <div class="form-group">
+                                    <label for="profilePhone">Phone Number</label>
+                                    <input type="tel" id="profilePhone" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label for="profileSkills">Skills (comma separated)</label>
+                                    <input type="text" id="profileSkills" class="form-input"
+                                        placeholder="JavaScript, React, Node.js, etc.">
+                                </div>
+                                <div class="form-group">
+                                    <label for="profileBio">Bio</label>
+                                    <textarea id="profileBio" class="form-input" rows="4"></textarea>
+                                </div>
+                                <button class="btn-primary" id="updateProfileBtn">Update Profile</button>
+                            </div>
+                        </div>
+                        <div class="dashboard-tab" id="notifications">
+                            <h2>Notifications</h2>
+                            <div class="notifications-list" id="notificationsList">
+                                <!-- Notifications will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Admin Panel -->
+            <section id="admin" class="page-section">
+                <div class="page-header">
+                    <h1>Admin Panel</h1>
+                </div>
+                <div class="admin-container">
+                    <div class="admin-sidebar">
+                        <div class="admin-menu">
+                            <a href="#" class="admin-menu-item active" data-admin-tab="manage-opportunities">
+                                <i class="fas fa-briefcase"></i> Manage Opportunities
+                            </a>
+                            <a href="#" class="admin-menu-item" data-admin-tab="manage-events">
+                                <i class="fas fa-calendar"></i> Manage Events
+                            </a>
+                            <a href="#" class="admin-menu-item" data-admin-tab="manage-users">
+                                <i class="fas fa-users"></i> Manage Users
+                            </a>
+                            <a href="#" class="admin-menu-item" data-admin-tab="analytics">
+                                <i class="fas fa-chart-bar"></i> Analytics
+                            </a>
+                            <a href="#" class="admin-menu-item" data-admin-tab="categories">
+                                <i class="fas fa-tags"></i> Manage Categories
+                            </a>
+                        </div>
+                    </div>
+                    <div class="admin-content">
+                        <div class="admin-tab" id="manage-events">
+                            <div class="admin-header">
+                                <h2>All Events</h2>
+                                <button class="btn-primary" onclick="showModal('createOpportunityModal')">
+                                    <i class="fas fa-plus"></i> Add New Event
+                                </button>
+                            </div>
+                            <div class="admin-table-container">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Title</th>
+                                            <th>Type</th>
+                                            <th>Category</th>
+                                            <th>Posted Date</th>
+                                            <th>Registrations</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adminEventsTable">
+                                        <!-- Admin events will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="admin-tab active" id="manage-opportunities">
+                            <div class="admin-header">
+                                <h2>All Opportunities</h2>
+                                <button class="btn-primary" id="adminCreateOpportunity">
+                                    <i class="fas fa-plus"></i> Add New Opportunity
+                                </button>
+                            </div>
+                            <div class="admin-table-container">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Title</th>
+                                            <th>Type</th>
+                                            <th>Category</th>
+                                            <th>Posted Date</th>
+                                            <th>Applications</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adminOpportunitiesTable">
+                                        <!-- Admin opportunities will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="admin-tab" id="manage-users">
+                            <h2>User Management</h2>
+                            <div class="admin-table-container">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Email</th>
+                                            <th>Role</th>
+                                            <th>Joined Date</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="usersTable">
+                                        <!-- Users will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="admin-tab" id="analytics">
+                            <h2>Platform Analytics</h2>
+                            <div class="analytics-grid">
+                                <div class="analytics-card">
+                                    <h3>Total Opportunities</h3>
+                                    <p id="totalOpportunities">0</p>
+                                </div>
+                                <div class="analytics-card">
+                                    <h3>Total Users</h3>
+                                    <p id="totalUsers">0</p>
+                                </div>
+                                <div class="analytics-card">
+                                    <h3>Total Applications</h3>
+                                    <p id="totalApplications">0</p>
+                                </div>
+                                <div class="analytics-card">
+                                    <h3>Active Opportunities</h3>
+                                    <p id="activeOpportunities">0</p>
+                                </div>
+                            </div>
+                            <div class="analytics-charts">
+                                <div class="chart-container">
+                                    <h3>Opportunities by Type</h3>
+                                    <canvas id="opportunitiesTypeChart"></canvas>
+                                </div>
+                                <div class="chart-container">
+                                    <h3>Applications Over Time</h3>
+                                    <canvas id="applicationsChart"></canvas>
+                                </div>
+                                <div class="chart-container">
+                                    <h3>User Growth</h3>
+                                    <canvas id="usersChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="admin-tab" id="user-logs">
+                            <div class="admin-header">
+                                <h2>User Activity Logs</h2>
+                                <div>
+                                    <button class="btn-secondary" onclick="exportLogsToPDF()">
+                                        <i class="fas fa-file-pdf"></i> Export PDF
+                                    </button>
+                                    <button class="btn-danger" onclick="clearAllLogs()">
+                                        <i class="fas fa-trash"></i> Clear All Logs
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="admin-table-container">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Action</th>
+                                            <th>Details</th>
+                                            <th>Timestamp</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="userLogsTable">
+                                        <!-- User logs will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="admin-tab" id="categories">
+                            <div class="admin-header">
+                                <h2>Categories Management</h2>
+                                <button class="btn-primary" id="addCategoryBtn">
+                                    <i class="fas fa-plus"></i> Add Category
+                                </button>
+                            </div>
+                            <div class="categories-management">
+                                <div class="categories-list" id="categoriesList">
+                                    <!-- Categories will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer id="mainFooter">
+            <div class="footer-container">
+                <div class="footer-content">
+                    <div class="footer-brand">
                         <i class="fas fa-briefcase"></i>
+                        <h3>TechOpportunityHub</h3>
+                        <p>Connecting tech talent with opportunities.</p>
                     </div>
-                    <div class="stat-number" id="statOpportunities">0</div>
-                    <div class="stat-label">Opportunities</div>
+                    <div class="footer-links">
+                        <div class="footer-section">
+                            <h4>Platform</h4>
+                            <a href="#home">Home</a>
+                            <a href="#opportunities">Opportunities</a>
+                            <a href="#events">Events</a>
+                        </div>
+                        <div class="footer-section">
+                            <h4>Support</h4>
+                            <a href="#dashboard">Dashboard</a>
+                            <a href="mailto:support@techopportunityhub.com">Contact Support</a>
+                        </div>
+                    </div>
+                    <div class="footer-social">
+                        <h4>Follow Us</h4>
+                        <div class="social-icons">
+                            <a href="#"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#"><i class="fab fa-twitter"></i></a>
+                            <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                            <a href="#"><i class="fab fa-instagram"></i></a>
+                        </div>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-building"></i>
-                    </div>
-                    <div class="stat-number" id="statCompanies">0</div>
-                    <div class="stat-label">Partner Companies</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-calendar-check"></i>
-                    </div>
-                    <div class="stat-number" id="statEvents">0</div>
-                    <div class="stat-label">Events Hosted</div>
+                <div class="footer-bottom">
+                    <p>&copy; 2023 Tech Opportunity Hub. All rights reserved.</p>
                 </div>
             </div>
+        </footer>
 
-            <!-- Main Content -->
-            <div class="about-content">
-                <div class="about-section">
-                    <div class="about-icon">
-                        <i class="fas fa-bullseye"></i>
+        <!-- Modals -->
+        <div class="modal" id="loginModal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2>Login</h2>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="loginEmail">Email</label>
+                        <input type="email" id="loginEmail" class="form-input" required>
                     </div>
-                    <h2>Our Mission</h2>
-                    <p>Tech Opportunity Hub is dedicated to democratizing access to tech career opportunities. We provide a comprehensive, user-friendly platform where tech enthusiasts can discover jobs, internships, training programs, and networking events all in one place. Our mission is to eliminate barriers and create pathways for tech talent to thrive.</p>
-                </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <input type="password" id="loginPassword" class="form-input" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Login</button>
+                </form>
+                <p class="modal-footer">
+                    Don't have an account? <a href="#" id="switchToRegister">Register here</a>
+                </p>
+            </div>
+        </div>
 
-                <div class="about-section">
-                    <div class="about-icon">
-                        <i class="fas fa-eye"></i>
+        <div class="modal" id="registerModal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2>Register</h2>
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label for="registerName">Full Name</label>
+                        <input type="text" id="registerName" class="form-input" required>
                     </div>
-                    <h2>Our Vision</h2>
-                    <p>To become the leading platform for tech career development in Africa, connecting millions of tech professionals with opportunities that help them grow, learn, and succeed. We envision a future where every tech talent has equal access to career opportunities, regardless of their location or background.</p>
-                </div>
+                    <div class="form-group">
+                        <label for="registerEmail">Email</label>
+                        <input type="email" id="registerEmail" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">Password</label>
+                        <input type="password" id="registerPassword" class="form-input" required minlength="6">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerConfirmPassword">Confirm Password</label>
+                        <input type="password" id="registerConfirmPassword" class="form-input" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Register</button>
+                </form>
+                <p class="modal-footer">
+                    Already have an account? <a href="#" id="switchToLogin">Login here</a>
+                </p>
+            </div>
+        </div>
 
-                <div class="about-section">
-                    <div class="about-icon">
-                        <i class="fas fa-heart"></i>
-                    </div>
-                    <h2>Our Values</h2>
-                    <div class="values-grid">
-                        <div class="value-item">
-                            <i class="fas fa-handshake"></i>
-                            <h3>Accessibility</h3>
-                            <p>Making opportunities accessible to everyone, everywhere</p>
-                        </div>
-                        <div class="value-item">
-                            <i class="fas fa-shield-alt"></i>
-                            <h3>Trust</h3>
-                            <p>Building a trusted platform for both job seekers and employers</p>
-                        </div>
-                        <div class="value-item">
-                            <i class="fas fa-rocket"></i>
-                            <h3>Innovation</h3>
-                            <p>Continuously improving our platform with cutting-edge technology</p>
-                        </div>
-                        <div class="value-item">
-                            <i class="fas fa-users-cog"></i>
-                            <h3>Community</h3>
-                            <p>Fostering a supportive tech community that grows together</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="about-section">
-                    <div class="about-icon">
-                        <i class="fas fa-star"></i>
-                    </div>
-                    <h2>What We Offer</h2>
-                    <div class="features-grid">
-                        <div class="feature-item">
-                            <div class="feature-icon">
-                                <i class="fas fa-briefcase"></i>
-                            </div>
-                            <h3>Job Opportunities</h3>
-                            <p>Discover full-time and part-time positions from leading tech companies. Filter by location, category, and requirements to find your perfect match.</p>
-                        </div>
-                        <div class="feature-item">
-                            <div class="feature-icon">
-                                <i class="fas fa-graduation-cap"></i>
-                            </div>
-                            <h3>Internships</h3>
-                            <p>Find internship opportunities that provide real-world experience and help you build your portfolio while learning from industry experts.</p>
-                        </div>
-                        <div class="feature-item">
-                            <div class="feature-icon">
-                                <i class="fas fa-chalkboard-teacher"></i>
-                            </div>
-                            <h3>Training Programs</h3>
-                            <p>Access skill development courses, bootcamps, and certification programs to advance your career and stay competitive in the tech industry.</p>
-                        </div>
-                        <div class="feature-item">
-                            <div class="feature-icon">
-                                <i class="fas fa-calendar"></i>
-                            </div>
-                            <h3>Tech Events</h3>
-                            <p>Stay updated with conferences, meetups, workshops, and hackathons. Network with peers and learn from industry leaders.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="about-section">
-                    <div class="about-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <h2>Who We Are</h2>
-                    <p>We are a team of passionate developers, designers, and tech enthusiasts committed to making career opportunities more accessible. Our platform serves students, professionals, career changers, and organizations in the tech industry across Africa and beyond.</p>
-                    <p>Founded with the belief that everyone deserves equal access to tech opportunities, we've built a platform that simplifies the job search process and connects talent with the right opportunities at the right time.</p>
-                </div>
-
-                <div class="about-section">
-                    <div class="about-icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <h2>Why Choose Us?</h2>
-                    <div class="benefits-list">
-                        <div class="benefit-item">
-                            <i class="fas fa-check-circle"></i>
-                            <div>
-                                <h3>Comprehensive Platform</h3>
-                                <p>All your career needs in one place - jobs, internships, training, and events</p>
-                            </div>
-                        </div>
-                        <div class="benefit-item">
-                            <i class="fas fa-check-circle"></i>
-                            <div>
-                                <h3>User-Friendly Interface</h3>
-                                <p>Intuitive design that makes finding opportunities quick and easy</p>
-                            </div>
-                        </div>
-                        <div class="benefit-item">
-                            <i class="fas fa-check-circle"></i>
-                            <div>
-                                <h3>Real-Time Updates</h3>
-                                <p>Get notified instantly when new opportunities match your profile</p>
-                            </div>
-                        </div>
-                        <div class="benefit-item">
-                            <i class="fas fa-check-circle"></i>
-                            <div>
-                                <h3>Verified Opportunities</h3>
-                                <p>All listings are verified to ensure quality and authenticity</p>
-                            </div>
-                        </div>
-                        <div class="benefit-item">
-                            <i class="fas fa-check-circle"></i>
-                            <div>
-                                <h3>Free to Use</h3>
-                                <p>No hidden fees - access all features completely free</p>
-                            </div>
-                        </div>
-                        <div class="benefit-item">
-                            <i class="fas fa-check-circle"></i>
-                            <div>
-                                <h3>Community Support</h3>
-                                <p>Join a growing community of tech professionals and learners</p>
-                            </div>
-                        </div>
-                    </div>
+        <div class="modal" id="opportunityModal">
+            <div class="modal-content modal-lg">
+                <span class="close-modal">&times;</span>
+                <div id="opportunityDetails">
+                    <!-- Opportunity details will be loaded here -->
                 </div>
             </div>
         </div>
-    </section>
 
-    <!-- Contact Section -->
-    <section id="contact" class="page-section">
-        <div class="page-header">
-            <h1>Contact Us</h1>
-            <p>Have questions, feedback, or need support? We're here to help!</p>
-        </div>
-        
-        <div class="contact-container">
-            <!-- Contact Info Section -->
-            <div class="contact-info-section">
-                <div class="contact-intro">
-                    <h2>Get in Touch</h2>
-                    <p>We'd love to hear from you! Whether you have a question about our platform, need support, or want to partner with us, our team is ready to assist you.</p>
-                </div>
-
-                <div class="contact-cards-grid">
-                    <div class="contact-card">
-                        <div class="contact-card-icon">
-                            <i class="fas fa-envelope"></i>
+        <div class="modal" id="createOpportunityModal">
+            <div class="modal-content modal-lg">
+                <span class="close-modal">&times;</span>
+                <h2>Create New Opportunity</h2>
+                <form id="createOpportunityForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="opportunityTitle">Title *</label>
+                            <input type="text" id="opportunityTitle" class="form-input" required>
                         </div>
-                        <h3>Email Us</h3>
-                        <p>Send us an email anytime!</p>
-                        <div class="contact-details">
-                            <a href="mailto:info@techopportunityhub.com">
-                                <i class="fas fa-envelope"></i> info@techopportunityhub.com
-                            </a>
-                            <a href="mailto:support@techopportunityhub.com">
-                                <i class="fas fa-headset"></i> support@techopportunityhub.com
-                            </a>
+                        <div class="form-group">
+                            <label for="opportunityType">Type *</label>
+                            <select id="opportunityType" class="form-input" required>
+                                <option value="">Select Type</option>
+                                <option value="job">Job</option>
+                                <option value="internship">Internship</option>
+                                <option value="training">Training</option>
+                                <option value="event">Event</option>
+                            </select>
                         </div>
                     </div>
-
-                    <div class="contact-card">
-                        <div class="contact-card-icon">
-                            <i class="fas fa-phone"></i>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="opportunityCategory">Category *</label>
+                            <select id="opportunityCategory" class="form-input" required>
+                                <option value="">Select Category</option>
+                                <option value="web-dev">Web Development</option>
+                                <option value="mobile-dev">Mobile Development</option>
+                                <option value="data-science">Data Science</option>
+                                <option value="ai-ml">AI/ML</option>
+                                <option value="cybersecurity">Cybersecurity</option>
+                                <option value="cloud">Cloud Computing</option>
+                            </select>
                         </div>
-                        <h3>Call Us</h3>
-                        <p>Speak directly with our team</p>
-                        <div class="contact-details">
-                            <a href="tel:+250788123456">
-                                <i class="fas fa-phone"></i> +250 788 123 456
-                            </a>
-                            <p class="contact-hours">
-                                <i class="fas fa-clock"></i> Mon - Fri, 9:00 AM - 5:00 PM EAT
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="contact-card">
-                        <div class="contact-card-icon">
-                            <i class="fas fa-map-marker-alt"></i>
-                        </div>
-                        <h3>Visit Us</h3>
-                        <p>Come see us in person</p>
-                        <div class="contact-details">
-                            <p>
-                                <i class="fas fa-map-marker-alt"></i> KG 123 Street<br>
-                                Kacyiru, Kigali<br>
-                                Rwanda
-                            </p>
+                        <div class="form-group">
+                            <label for="opportunityDeadline">Deadline</label>
+                            <input type="date" id="opportunityDeadline" class="form-input">
                         </div>
                     </div>
-
-                    <div class="contact-card">
-                        <div class="contact-card-icon">
-                            <i class="fas fa-share-alt"></i>
-                        </div>
-                        <h3>Follow Us</h3>
-                        <p>Stay connected on social media</p>
-                        <div class="social-links-contact">
-                            <a href="#" class="social-link" title="Facebook">
-                                <i class="fab fa-facebook-f"></i>
-                            </a>
-                            <a href="#" class="social-link" title="Twitter">
-                                <i class="fab fa-twitter"></i>
-                            </a>
-                            <a href="#" class="social-link" title="LinkedIn">
-                                <i class="fab fa-linkedin-in"></i>
-                            </a>
-                            <a href="#" class="social-link" title="Instagram">
-                                <i class="fab fa-instagram"></i>
-                            </a>
-                            <a href="#" class="social-link" title="GitHub">
-                                <i class="fab fa-github"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Links -->
-                <div class="contact-quick-links">
-                    <h3>Quick Links</h3>
-                    <div class="quick-links-grid">
-                        <a href="#opportunities" class="quick-link">
-                            <i class="fas fa-briefcase"></i> Browse Opportunities
-                        </a>
-                        <a href="#events" class="quick-link">
-                            <i class="fas fa-calendar"></i> View Events
-                        </a>
-                        <a href="#dashboard" class="quick-link">
-                            <i class="fas fa-tachometer-alt"></i> Go to Dashboard
-                        </a>
-                        <a href="#about" class="quick-link">
-                            <i class="fas fa-info-circle"></i> Learn More
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Contact Form Section -->
-            <div class="contact-form-section">
-                <h2>Send us a Message</h2>
-                <p class="form-description">Fill out the form below and we'll get back to you as soon as possible.</p>
-                
-                <form id="contactForm" class="contact-form">
                     <div class="form-group">
-                        <label for="contactName">
-                            <i class="fas fa-user"></i> Your Name *
-                        </label>
-                        <input type="text" id="contactName" class="form-input" placeholder="Enter your full name" required>
+                        <label for="opportunityCompany">Company/Organization</label>
+                        <input type="text" id="opportunityCompany" class="form-input">
                     </div>
-                    
                     <div class="form-group">
-                        <label for="contactEmail">
-                            <i class="fas fa-envelope"></i> Your Email *
-                        </label>
-                        <input type="email" id="contactEmail" class="form-input" placeholder="your.email@example.com" required>
+                        <label for="opportunityLocation">Location</label>
+                        <input type="text" id="opportunityLocation" class="form-input"
+                            placeholder="e.g., Remote, Kigali, Rwanda">
                     </div>
-                    
                     <div class="form-group">
-                        <label for="contactSubject">
-                            <i class="fas fa-tag"></i> Subject *
-                        </label>
-                        <select id="contactSubject" class="form-input" required>
-                            <option value="">Select a subject</option>
-                            <option value="general">General Inquiry</option>
-                            <option value="support">Technical Support</option>
-                            <option value="partnership">Partnership Opportunity</option>
-                            <option value="feedback">Feedback & Suggestions</option>
-                            <option value="report">Report an Issue</option>
-                            <option value="other">Other</option>
-                        </select>
+                        <label for="opportunityDescription">Description *</label>
+                        <textarea id="opportunityDescription" class="form-input" rows="5" required></textarea>
                     </div>
-                    
                     <div class="form-group">
-                        <label for="contactMessage">
-                            <i class="fas fa-comment-alt"></i> Message *
-                        </label>
-                        <textarea id="contactMessage" class="form-input" rows="6" placeholder="Tell us how we can help you..." required></textarea>
+                        <label for="opportunityRequirements">Requirements</label>
+                        <textarea id="opportunityRequirements" class="form-input" rows="3"></textarea>
                     </div>
-                    
+                    <div class="form-group">
+                        <label for="opportunityBenefits">Benefits</label>
+                        <textarea id="opportunityBenefits" class="form-input" rows="3"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="opportunitySalary">Salary/Stipend</label>
+                            <input type="text" id="opportunitySalary" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="opportunityLink">Application Link</label>
+                            <input type="url" id="opportunityLink" class="form-input">
+                        </div>
+                    </div>
                     <div class="form-actions">
-                        <button type="submit" class="btn-primary btn-large">
-                            <i class="fas fa-paper-plane"></i> Send Message
+                        <button type="button" class="btn-secondary" onclick="closeModal('createOpportunityModal')">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-plus"></i> Create Opportunity
                         </button>
                     </div>
                 </form>
-
-                <!-- FAQ Section -->
-                <div class="contact-faq">
-                    <h3>Frequently Asked Questions</h3>
-                    <div class="faq-list">
-                        <div class="faq-item">
-                            <div class="faq-question">
-                                <i class="fas fa-question-circle"></i>
-                                <span>How do I create an account?</span>
-                            </div>
-                            <div class="faq-answer">
-                                Click on the "Register" button in the navigation bar, fill in your details, and verify your email address.
-                            </div>
-                        </div>
-                        <div class="faq-item">
-                            <div class="faq-question">
-                                <i class="fas fa-question-circle"></i>
-                                <span>Is the platform free to use?</span>
-                            </div>
-                            <div class="faq-answer">
-                                Yes! Tech Opportunity Hub is completely free for job seekers. All features are available at no cost.
-                            </div>
-                        </div>
-                        <div class="faq-item">
-                            <div class="faq-question">
-                                <i class="fas fa-question-circle"></i>
-                                <span>How do I apply for opportunities?</span>
-                            </div>
-                            <div class="faq-answer">
-                                Browse opportunities, click on one that interests you, and click the "Apply Now" button. Make sure your profile is complete!
-                            </div>
-                        </div>
-                        <div class="faq-item">
-                            <div class="faq-question">
-                                <i class="fas fa-question-circle"></i>
-                                <span>Can I submit my own events?</span>
-                            </div>
-                            <div class="faq-answer">
-                                Yes! Registered users can submit events. They will be reviewed by our admin team before being published.
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
-    </section>
 
-    <!-- Edit Opportunity Modal -->
-    <div class="modal" id="editOpportunityModal">
-        <div class="modal-content modal-lg">
-            <span class="close-modal">&times;</span>
-            <h2>Edit Opportunity</h2>
-            <form id="editOpportunityForm">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="editOpportunityTitle">Title *</label>
-                        <input type="text" id="editOpportunityTitle" class="form-input" required>
+        <!-- Submit Event Modal -->
+        <div class="modal" id="submitEventModal">
+            <div class="modal-content modal-lg">
+                <span class="close-modal">&times;</span>
+                <h2>Submit an Event</h2>
+                <form id="submitEventForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="eventTitle">Event Title *</label>
+                            <input type="text" id="eventTitle" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="eventCategory">Category *</label>
+                            <select id="eventCategory" class="form-input" required>
+                                <option value="">Select Category</option>
+                                <option value="web-dev">Web Development</option>
+                                <option value="mobile-dev">Mobile Development</option>
+                                <option value="data-science">Data Science</option>
+                                <option value="ai-ml">AI/ML</option>
+                                <option value="cybersecurity">Cybersecurity</option>
+                                <option value="cloud">Cloud Computing</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="eventOrganizer">Organizer</label>
+                            <input type="text" id="eventOrganizer" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="eventDate">Event Date</label>
+                            <input type="date" id="eventDate" class="form-input">
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label for="editOpportunityType">Type *</label>
-                        <select id="editOpportunityType" class="form-input" required>
-                            <option value="">Select Type</option>
-                            <option value="job">Job</option>
-                            <option value="internship">Internship</option>
-                            <option value="training">Training</option>
-                            <option value="event">Event</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="editOpportunityCategory">Category *</label>
-                        <select id="editOpportunityCategory" class="form-input" required>
-                            <option value="">Select Category</option>
-                            <option value="web-dev">Web Development</option>
-                            <option value="mobile-dev">Mobile Development</option>
-                            <option value="data-science">Data Science</option>
-                            <option value="ai-ml">AI/ML</option>
-                            <option value="cybersecurity">Cybersecurity</option>
-                            <option value="cloud">Cloud Computing</option>
-                        </select>
+                        <label for="eventLocation">Location</label>
+                        <input type="text" id="eventLocation" class="form-input" placeholder="e.g., Kigali, Rwanda or Online">
                     </div>
                     <div class="form-group">
-                        <label for="editOpportunityDeadline">Deadline</label>
-                        <input type="date" id="editOpportunityDeadline" class="form-input">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="editOpportunityCompany">Company/Organization</label>
-                    <input type="text" id="editOpportunityCompany" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label for="editOpportunityLocation">Location</label>
-                    <input type="text" id="editOpportunityLocation" class="form-input" placeholder="e.g., Remote, Kigali, Rwanda">
-                </div>
-                <div class="form-group">
-                    <label for="editOpportunityDescription">Description *</label>
-                    <textarea id="editOpportunityDescription" class="form-input" rows="5" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="editOpportunityRequirements">Requirements</label>
-                    <textarea id="editOpportunityRequirements" class="form-input" rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="editOpportunityBenefits">Benefits</label>
-                    <textarea id="editOpportunityBenefits" class="form-input" rows="3"></textarea>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="editOpportunitySalary">Salary/Stipend</label>
-                        <input type="text" id="editOpportunitySalary" class="form-input">
+                        <label for="eventDescription">Description *</label>
+                        <textarea id="eventDescription" class="form-input" rows="5" required></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="editOpportunityLink">Application Link</label>
-                        <input type="url" id="editOpportunityLink" class="form-input">
+                        <label for="eventRequirements">Requirements (optional)</label>
+                        <textarea id="eventRequirements" class="form-input" rows="3"></textarea>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="editOpportunityStatus">Status *</label>
-                    <select id="editOpportunityStatus" class="form-input" required>
-                        <option value="active">Active</option>
-                        <option value="closed">Closed</option>
-                        <option value="draft">Draft</option>
-                    </select>
-                </div>
-                <input type="hidden" id="editOpportunityId">
-                <div class="form-actions">
-                    <button type="button" class="btn-secondary" onclick="closeModal('editOpportunityModal')">
-                        <i class="fas fa-times"></i> Cancel
-                    </button>
-                    <button type="submit" class="btn-primary">
-                        <i class="fas fa-save"></i> Update Opportunity
-                    </button>
-                </div>
-            </form>
+                    <div class="form-group">
+                        <label for="eventLink">Event Link/Registration URL</label>
+                        <input type="url" id="eventLink" class="form-input">
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="closeModal('submitEventModal')">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-paper-plane"></i> Submit Event
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
-    </div>
 
-    <!-- Scripts -->
-    <script src="script.js"></script>
+        <!-- Toast Notifications -->
+        <div class="toast-container" id="toastContainer"></div>
+
+        <!-- About Section -->
+        <!-- Edit Opportunity Modal -->
+        <div class="modal" id="editOpportunityModal">
+            <div class="modal-content modal-lg">
+                <span class="close-modal">&times;</span>
+                <h2>Edit Opportunity</h2>
+                <form id="editOpportunityForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editOpportunityTitle">Title *</label>
+                            <input type="text" id="editOpportunityTitle" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editOpportunityType">Type *</label>
+                            <select id="editOpportunityType" class="form-input" required>
+                                <option value="">Select Type</option>
+                                <option value="job">Job</option>
+                                <option value="internship">Internship</option>
+                                <option value="training">Training</option>
+                                <option value="event">Event</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editOpportunityCategory">Category *</label>
+                            <select id="editOpportunityCategory" class="form-input" required>
+                                <option value="">Select Category</option>
+                                <option value="web-dev">Web Development</option>
+                                <option value="mobile-dev">Mobile Development</option>
+                                <option value="data-science">Data Science</option>
+                                <option value="ai-ml">AI/ML</option>
+                                <option value="cybersecurity">Cybersecurity</option>
+                                <option value="cloud">Cloud Computing</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editOpportunityDeadline">Deadline</label>
+                            <input type="date" id="editOpportunityDeadline" class="form-input">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="editOpportunityCompany">Company/Organization</label>
+                        <input type="text" id="editOpportunityCompany" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="editOpportunityLocation">Location</label>
+                        <input type="text" id="editOpportunityLocation" class="form-input"
+                            placeholder="e.g., Remote, Kigali, Rwanda">
+                    </div>
+                    <div class="form-group">
+                        <label for="editOpportunityDescription">Description *</label>
+                        <textarea id="editOpportunityDescription" class="form-input" rows="5" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="editOpportunityRequirements">Requirements</label>
+                        <textarea id="editOpportunityRequirements" class="form-input" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="editOpportunityBenefits">Benefits</label>
+                        <textarea id="editOpportunityBenefits" class="form-input" rows="3"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editOpportunitySalary">Salary/Stipend</label>
+                            <input type="text" id="editOpportunitySalary" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="editOpportunityLink">Application Link</label>
+                            <input type="url" id="editOpportunityLink" class="form-input">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="editOpportunityStatus">Status *</label>
+                        <select id="editOpportunityStatus" class="form-input" required>
+                            <option value="active">Active</option>
+                            <option value="closed">Closed</option>
+                            <option value="draft">Draft</option>
+                        </select>
+                    </div>
+                    <input type="hidden" id="editOpportunityId">
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="closeModal('editOpportunityModal')">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-save"></i> Update Opportunity
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Scripts -->
+        <script src="script.js"></script>
 </body>
+
 </html>
